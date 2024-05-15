@@ -1,0 +1,3 @@
+/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles/CNN.dir
+/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles/edit_cache.dir
+/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles/rebuild_cache.dir

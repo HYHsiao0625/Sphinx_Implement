@@ -3,43 +3,45 @@
 #include <cstdlib>
 #include <sstream>
 #include <fstream>
+#include <vector>
+#include <iomanip>
 
 using namespace std;
+
 const int filter_size = 5;
 const double eta = 0.01;
 const int batch_size = 200;
 
-int data_train[60000][784];
-int data_test[10000][784];
-int label_train[60000];
-int label_test[10000];
+vector<vector<int>> data_train(60000, vector<int>(784, 0));
+vector<vector<int>> data_test(10000, vector<int>(784, 0));
+vector<int> label_train(60000, 0);
+vector<int> label_test(10000, 0);
 
-double conv_w[5][5][5];
-double conv_b[5][28][28];
-double conv_layer[5][28][28];
-double sig_layer[5][28][28];
-double max_pooling[5][28][28];
-double max_layer[5][14][14];
+vector<vector<vector<double>>> conv_w(5, vector<vector<double>>(5, vector<double>(5, 0)));
+vector<vector<vector<double>>> conv_b(5, vector<vector<double>>(28, vector<double>(28, 0)));
+vector<vector<vector<double>>> conv_layer(5, vector<vector<double>>(28, vector<double>(28, 0)));
+vector<vector<vector<double>>> sig_layer(5, vector<vector<double>>(28, vector<double>(28, 0)));
+vector<vector<vector<double>>> max_pooling(5, vector<vector<double>>(28, vector<double>(28, 0)));
+vector<vector<vector<double>>> max_layer(5, vector<vector<double>>(14, vector<double>(14, 0)));
 
-double dense_input[980];
-double dense_w[980][120];
-double dense_b[120];
-double dense_sum[120];
-double dense_sigmoid[120];
-double dense_w2[120][10];
-double dense_b2[10];
-double dense_sum2[10];
-double dense_softmax[10];
+vector<double> dense_input(980, 0);
+vector<vector<double>> dense_w(980, vector<double>(120, 0));
+vector<double> dense_b(120, 0);
+vector<double> dense_sum(120, 0);
+vector<double> dense_sigmoid(120, 0);
+vector<vector<double>> dense_w2(120, vector<double>(10, 0));
+vector<double> dense_b2(10, 0);
+vector<double> dense_sum2(10, 0);
+vector<double> dense_softmax(10, 0);
 
-double dw2[120][10];
-double db2[10];
-double dw1[980][120];
-double db1[120];
+vector<vector<double>> dw2(120, vector<double>(10, 0));
+vector<double> db2(10, 0);
+vector<vector<double>> dw1(980, vector<double>(120, 0));
+vector<double> db1(120, 0);
 
-double dw_max[5][28][28];
-double dw_conv[5][5][5];
-double db_conv[5][28][28];
-
+vector<vector<vector<double>>> dw_max(5, vector<vector<double>>(28, vector<double>(28, 0)));
+vector<vector<vector<double>>> dw_conv(5, vector<vector<double>>(5, vector<double>(5, 0)));
+vector<vector<vector<double>>> db_conv(5, vector<vector<double>>(28, vector<double>(28, 0)));
 
 /* ************************************************************ */
 /* Helper functions */
@@ -54,7 +56,7 @@ double d_sigmoid(double x)
 	double sig = sigmoid(x);
 	return sig * (1 - sig);
 }
-double softmax_den(double* x, int len) 
+double softmax_den(vector<double> x, int len) 
 {
 	double val = 0;
 	for (int i = 0; i < len; i++) 
@@ -109,8 +111,8 @@ void initialise_weights()
 
 /* ************************************************************ */
 /* Forward Pass */
-void forward_pass(int img[][32]) {
-
+void forward_pass(vector<vector<int>> img) 
+{
 	// Convolution Operation + Sigmoid Activation
 	for (int filter_dim = 0; filter_dim < 5; filter_dim++) 
 	{
@@ -126,14 +128,14 @@ void forward_pass(int img[][32]) {
 				{
 					for (int l = 0; l < filter_size; l++) 
 					{
-						conv_layer[filter_dim][i][j] = img[-2 + i + k][-2 + j + l] * conv_w[filter_dim][k][l];
+						conv_layer[filter_dim][i][j] = img[i + k][j + l] * conv_w[filter_dim][k][l];
 					}
 				}
 				sig_layer[filter_dim][i][j] = sigmoid(conv_layer[filter_dim][i][j] + conv_b[filter_dim][i][j]);
 			}
 		}
 	}
-
+	
 	// MAX Pooling (max_pooling, max_layer)
 	double cur_max = 0;
 	int max_i = 0, max_j = 0;
@@ -245,7 +247,7 @@ void update_weights() {
 
 /* ************************************************************ */
 /* Backward Pass */
-void backward_pass(double* y_hat, int* y, int img[][32]) 
+void backward_pass(vector<double> y_hat, vector<int> y, vector<vector<int>> img) 
 {
 	double delta4[10];
 	for (int i = 0; i < 10; i++) 
@@ -309,8 +311,14 @@ void backward_pass(double* y_hat, int* y, int img[][32])
 				{
 					for (int m = 0; m < 2; m++) 
 					{
-						if (max_pooling[filter_dim][i + l][j + m] == 1) dw_max[filter_dim][i][j] = delta2[k];
-						else dw_max[filter_dim][i][j] = 0;
+						if (max_pooling[filter_dim][i + l][j + m] == 1) 
+						{
+							dw_max[filter_dim][i][j] = delta2[k];
+						}
+						else
+						{
+							dw_max[filter_dim][i][j] = 0;
+						}
 					}
 				}
 				k++;
@@ -353,7 +361,7 @@ void backward_pass(double* y_hat, int* y, int img[][32])
 				{
 					for (int l = 0; l < 5; l++) 
 					{
-						dw_conv[filter_dim][k][l] += img[i - 2 + k][j - 2 + l] * cur_val;
+						dw_conv[filter_dim][k][l] += img[i + k][j + l] * cur_val;
 					}
 				}
 			}
@@ -365,9 +373,10 @@ void backward_pass(double* y_hat, int* y, int img[][32])
 /* ************************************************************ */
 
 
-void read_train_data() {
+void read_train_data()
+{
 	ifstream csvread;
-	csvread.open("mnist_train.csv", ios::in);
+	csvread.open("../mnist_train.csv", ios::in);
 	if (csvread) 
 	{
 		//Datei bis Ende einlesen und bei ';' strings trennen
@@ -395,7 +404,8 @@ void read_train_data() {
 		}
 		csvread.close();
 	}
-	else {
+	else 
+	{
 		//cerr << "Fehler beim Lesen!" << endl;
 		cerr << "Can not read data!" << endl;
 	}
@@ -403,7 +413,7 @@ void read_train_data() {
 void read_test_data() 
 {
 	ifstream csvread;
-	csvread.open("mnist_test.csv", ios::in);
+	csvread.open("../mnist_test.csv", ios::in);
 	if (csvread) 
 	{
 		//Datei bis Ende einlesen und bei ';' strings trennen
@@ -438,7 +448,7 @@ void read_test_data()
 	}
 }
 
-void give_img(int* vec, int img[][32]) 
+void give_img(vector<int> vec, vector<vector<int>>& img) 
 {
 	int k = 0;
 	for (int i = 0; i < 32; i++) 
@@ -447,7 +457,7 @@ void give_img(int* vec, int img[][32])
 		{
 			if (i < 2 || j < 2) 
 			{
-				img[i][j] = 0;
+				continue;
 			}
 			else 
 			{
@@ -458,11 +468,12 @@ void give_img(int* vec, int img[][32])
 	}
 }
 
-void give_y(int y, int* vector_y) 
+void give_y(int y, vector<int>& vector_y) 
 {
 	for (int i = 0; i < 10; i++) vector_y[i] = 0;
 	vector_y[y] = 1;
 }
+
 int give_prediction() 
 {
 	double max_val = dense_softmax[0];
@@ -484,19 +495,18 @@ int main()
 	read_test_data();
 	read_train_data();
 	initialise_weights();
-
-	//for (int i=0; i<
-	int epoch = 2000;
+	
+	int epoch = 20;
 	int num = 0;
 	cout << "Start Training." << endl;
 	for (int i = 0; i < epoch; i++) 
 	{
-		cout << "Epoch " << i << " done." << endl;
 		for (int j = 0; j < batch_size; j++) 
 		{
+			cout << "\rEpoch: " << i << " --------- " << setw(3) << j << " / " << batch_size << " done." << flush;
 			num = rand() % 60000;
-			int img[32][32];
-			int vector_y[10];
+			vector<vector<int>> img(32, vector<int>(32, 0));
+			vector<int> vector_y(10, 0);
 			give_y(label_train[num], vector_y);
 			give_img(data_train[num], img);
 			forward_pass(img);
@@ -505,7 +515,7 @@ int main()
 			//num++;
 		}
 	}
-
+	
 	int val_len = 600;
 	int cor = 0;
 	int confusion_mat[10][10];
@@ -517,7 +527,7 @@ int main()
 	cout << "Start Testing." << endl;
 	for (int i = 0; i < val_len; i++) 
 	{
-		int img[32][32];
+		vector<vector<int>> img(32, vector<int>(32, 0));
 		give_img(data_test[i], img);
 		forward_pass(img);
 		int pre = give_prediction();
@@ -537,6 +547,6 @@ int main()
 		}
 		cout << endl;
 	}
-
+	
 	return 0;
 }
