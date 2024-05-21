@@ -64,6 +64,8 @@ CMAKE_BINARY_DIR = /home/yuan/Desktop/Sphinx_Implement/build
 
 # The main recursive "all" target.
 all: CMakeFiles/CNN.dir/all
+all: CMakeFiles/SERVER.dir/all
+all: CMakeFiles/CLIENT.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -72,6 +74,8 @@ preinstall:
 
 # The main recursive "clean" target.
 clean: CMakeFiles/CNN.dir/clean
+clean: CMakeFiles/SERVER.dir/clean
+clean: CMakeFiles/CLIENT.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -81,7 +85,7 @@ clean: CMakeFiles/CNN.dir/clean
 CMakeFiles/CNN.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/CNN.dir/build.make CMakeFiles/CNN.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/CNN.dir/build.make CMakeFiles/CNN.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles --progress-num=1,2 "Built target CNN"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles --progress-num=3,4 "Built target CNN"
 .PHONY : CMakeFiles/CNN.dir/all
 
 # Build rule for subdir invocation for target.
@@ -99,6 +103,58 @@ CNN: CMakeFiles/CNN.dir/rule
 CMakeFiles/CNN.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/CNN.dir/build.make CMakeFiles/CNN.dir/clean
 .PHONY : CMakeFiles/CNN.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/SERVER.dir
+
+# All Build rule for target.
+CMakeFiles/SERVER.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles --progress-num=5,6 "Built target SERVER"
+.PHONY : CMakeFiles/SERVER.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/SERVER.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/SERVER.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles 0
+.PHONY : CMakeFiles/SERVER.dir/rule
+
+# Convenience name for target.
+SERVER: CMakeFiles/SERVER.dir/rule
+.PHONY : SERVER
+
+# clean rule for target.
+CMakeFiles/SERVER.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/clean
+.PHONY : CMakeFiles/SERVER.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/CLIENT.dir
+
+# All Build rule for target.
+CMakeFiles/CLIENT.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles --progress-num=1,2 "Built target CLIENT"
+.PHONY : CMakeFiles/CLIENT.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/CLIENT.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/CLIENT.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles 0
+.PHONY : CMakeFiles/CLIENT.dir/rule
+
+# Convenience name for target.
+CLIENT: CMakeFiles/CLIENT.dir/rule
+.PHONY : CLIENT
+
+# clean rule for target.
+CMakeFiles/CLIENT.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/clean
+.PHONY : CMakeFiles/CLIENT.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

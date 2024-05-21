@@ -5,8 +5,10 @@
 #include <fstream>
 #include <vector>
 #include <iomanip>
+#include <chrono>
 
 using namespace std;
+using namespace std::chrono;
 
 const int filter_size = 5;
 const double eta = 0.01;
@@ -17,15 +19,15 @@ vector<vector<int>> data_test(10000, vector<int>(784, 0));
 vector<int> label_train(60000, 0);
 vector<int> label_test(10000, 0);
 
-vector<vector<vector<double>>> conv_w(5, vector<vector<double>>(5, vector<double>(5, 0)));
-vector<vector<vector<double>>> conv_b(5, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> conv_layer(5, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> sig_layer(5, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> max_pooling(5, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> max_layer(5, vector<vector<double>>(14, vector<double>(14, 0)));
+vector<vector<vector<double>>> conv_w(8, vector<vector<double>>(5, vector<double>(5, 0)));
+vector<vector<vector<double>>> conv_b(8, vector<vector<double>>(28, vector<double>(28, 0)));
+vector<vector<vector<double>>> conv_layer(8, vector<vector<double>>(28, vector<double>(28, 0)));
+vector<vector<vector<double>>> sig_layer(8, vector<vector<double>>(28, vector<double>(28, 0)));
+vector<vector<vector<double>>> max_pooling(8, vector<vector<double>>(28, vector<double>(28, 0)));
+vector<vector<vector<double>>> max_layer(8, vector<vector<double>>(14, vector<double>(14, 0)));
 
-vector<double> dense_input(980, 0);
-vector<vector<double>> dense_w(980, vector<double>(120, 0));
+vector<double> dense_input(1568, 0);
+vector<vector<double>> dense_w(1568, vector<double>(120, 0));
 vector<double> dense_b(120, 0);
 vector<double> dense_sum(120, 0);
 vector<double> dense_sigmoid(120, 0);
@@ -36,12 +38,12 @@ vector<double> dense_softmax(10, 0);
 
 vector<vector<double>> dw2(120, vector<double>(10, 0));
 vector<double> db2(10, 0);
-vector<vector<double>> dw1(980, vector<double>(120, 0));
+vector<vector<double>> dw1(1568, vector<double>(120, 0));
 vector<double> db1(120, 0);
 
-vector<vector<vector<double>>> dw_max(5, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> dw_conv(5, vector<vector<double>>(5, vector<double>(5, 0)));
-vector<vector<vector<double>>> db_conv(5, vector<vector<double>>(28, vector<double>(28, 0)));
+vector<vector<vector<double>>> dw_max(8, vector<vector<double>>(28, vector<double>(28, 0)));
+vector<vector<vector<double>>> dw_conv(8, vector<vector<double>>(5, vector<double>(5, 0)));
+vector<vector<vector<double>>> db_conv(8, vector<vector<double>>(28, vector<double>(28, 0)));
 
 /* ************************************************************ */
 /* Helper functions */
@@ -68,7 +70,7 @@ double softmax_den(vector<double> x, int len)
 
 void initialise_weights() 
 {
-	for (int i = 0; i < 5; i++) 
+	for (int i = 0; i < 8; i++) 
 	{
 		for (int j = 0; j < 28; j++) 
 		{
@@ -83,7 +85,7 @@ void initialise_weights()
 		}
 	}
 
-	for (int i = 0; i < 980; i++) 
+	for (int i = 0; i < 1568; i++) 
 	{
 		for (int j = 0; j < 120; j++) 
 		{
@@ -114,7 +116,7 @@ void initialise_weights()
 void forward_pass(vector<vector<int>> img) 
 {
 	// Convolution Operation + Sigmoid Activation
-	for (int filter_dim = 0; filter_dim < 5; filter_dim++) 
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
 		for (int i = 0; i < 28; i++) 
 		{
@@ -139,7 +141,7 @@ void forward_pass(vector<vector<int>> img)
 	// MAX Pooling (max_pooling, max_layer)
 	double cur_max = 0;
 	int max_i = 0, max_j = 0;
-	for (int filter_dim = 0; filter_dim < 5; filter_dim++) 
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
 		for (int i = 0; i < 28; i += 2) 
 		{
@@ -166,7 +168,7 @@ void forward_pass(vector<vector<int>> img)
 	}
 
 	int k = 0;
-	for (int filter_dim = 0; filter_dim < 5; filter_dim++) 
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
 		for (int i = 0; i < 14; i++) 
 		{
@@ -183,7 +185,7 @@ void forward_pass(vector<vector<int>> img)
 	{
 		dense_sum[i] = 0;
 		dense_sigmoid[i] = 0;
-		for (int j = 0; j < 980; j++) 
+		for (int j = 0; j < 1568; j++) 
 		{
 			dense_sum[i] += dense_w[j][i] * dense_input[j];
 		}
@@ -219,13 +221,13 @@ void update_weights() {
 			dense_b2[j] -= eta * db2[j];
 			dense_w2[i][j] -= eta * dw2[i][j];
 		}
-		for (int k = 0; k < 980; k++) 
+		for (int k = 0; k < 1568; k++) 
 		{
 			dense_w[k][i] -= eta * dw1[k][i];
 		}
 	}
 
-	for (int i = 0; i < 5; i++) 
+	for (int i = 0; i < 8; i++) 
 	{
 		for (int k = 0; k < 5; k++) 
 		{
@@ -279,7 +281,7 @@ void backward_pass(vector<double> y_hat, vector<int> y, vector<vector<int>> img)
 	for (int i = 0; i < 120; i++) db1[i] = delta3[i]; // Bias Weight change
 
 	// Calculate Weight Changes for Dense Layer 1
-	for (int i = 0; i < 980; i++) 
+	for (int i = 0; i < 1568; i++) 
 	{
 		for (int j = 0; j < 120; j++) 
 		{
@@ -288,8 +290,8 @@ void backward_pass(vector<double> y_hat, vector<int> y, vector<vector<int>> img)
 	}
 
 	// Delta2
-	double delta2[980];
-	for (int i = 0; i < 980; i++) 
+	double delta2[1568];
+	for (int i = 0; i < 1568; i++) 
 	{
 		delta2[i] = 0;
 		for (int j = 0; j < 120; j++) 
@@ -301,7 +303,7 @@ void backward_pass(vector<double> y_hat, vector<int> y, vector<vector<int>> img)
 
 	// Calc back-propagated max layer dw_max
 	int k = 0;
-	for (int filter_dim = 0; filter_dim < 5; filter_dim++) 
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
 		for (int i = 0; i < 28; i += 2) 
 		{
@@ -326,7 +328,7 @@ void backward_pass(vector<double> y_hat, vector<int> y, vector<vector<int>> img)
 		}
 	}
 	// Calc Conv Bias Changes
-	for (int filter_dim = 0; filter_dim < 5; filter_dim++) 
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
 		for (int i = 0; i < 28; i++) 
 		{
@@ -338,7 +340,7 @@ void backward_pass(vector<double> y_hat, vector<int> y, vector<vector<int>> img)
 	}
 
 	// Set Conv Layer Weight changes to 0
-	for (int filter_dim = 0; filter_dim < 5; filter_dim++) 
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
 		for (int i = 0; i < 5; i++) 
 		{
@@ -350,7 +352,7 @@ void backward_pass(vector<double> y_hat, vector<int> y, vector<vector<int>> img)
 	}
 
 	// Calculate Weight Changes for Conv Layer
-	for (int filter_dim = 0; filter_dim < 5; filter_dim++) 
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
 		for (int i = 0; i < 28; i++) 
 		{
@@ -490,15 +492,17 @@ int give_prediction()
 	return max_pos;
 }
 
-int main() 
+int main(int argc, char *argv[]) 
 {
+	time_t start, end;
 	read_test_data();
 	read_train_data();
 	initialise_weights();
 	
-	int epoch = 20;
+	int epoch = stoi(argv[1]);
 	int num = 0;
 	cout << "Start Training." << endl;
+	auto startTime = chrono::high_resolution_clock::now();
 	for (int i = 0; i < epoch; i++) 
 	{
 		for (int j = 0; j < batch_size; j++) 
@@ -515,7 +519,17 @@ int main()
 			//num++;
 		}
 	}
-	
+	cout << endl;
+	auto endTime = chrono::high_resolution_clock::now();
+	chrono::duration<double, milli> elapsed = endTime - startTime;
+
+	double elapsedSeconds = elapsed.count() / 1000.0;
+	int elapsedMinutes = static_cast<int>(elapsedSeconds / 60);
+	int elapsedSeconds_ = static_cast<int>(elapsedSeconds) % 60;
+	int elapsedMilliseconds = static_cast<int>(elapsedSeconds * 1000) % 1000;
+	cout << fixed << setprecision(10);
+	cout << "Training time : " << elapsedMinutes << "m " << elapsedSeconds_ << "s " << elapsedMilliseconds << "ms";
+	cout << endl;
 	int val_len = 600;
 	int cor = 0;
 	int confusion_mat[10][10];

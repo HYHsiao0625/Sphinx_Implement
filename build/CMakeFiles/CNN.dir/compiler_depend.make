@@ -234,8 +234,15 @@ CMakeFiles/CNN.dir/cnn.cpp.o: ../cnn.cpp \
   /usr/include/c++/11/array \
   /usr/include/c++/11/bits/uses_allocator.h \
   /usr/include/c++/11/bits/invoke.h \
-  /usr/include/c++/11/bits/quoted_string.h
+  /usr/include/c++/11/bits/quoted_string.h \
+  /usr/include/c++/11/chrono \
+  /usr/include/c++/11/ratio \
+  /usr/include/c++/11/bits/parse_numbers.h
 
+
+/usr/include/c++/11/bits/parse_numbers.h:
+
+/usr/include/c++/11/ratio:
 
 /usr/include/c++/11/bits/uses_allocator.h:
 
@@ -354,6 +361,8 @@ CMakeFiles/CNN.dir/cnn.cpp.o: ../cnn.cpp \
 /usr/include/c++/11/cerrno:
 
 /usr/include/stdio.h:
+
+/usr/include/c++/11/chrono:
 
 /usr/include/c++/11/cstdio:
 

@@ -186,4 +186,5 @@ CMakeFiles/CNN.dir/cnn.cpp.o: /home/yuan/Desktop/Sphinx_Implement/cnn.cpp \
  /usr/include/c++/11/bits/stl_relops.h /usr/include/c++/11/tuple \
  /usr/include/c++/11/array /usr/include/c++/11/bits/uses_allocator.h \
  /usr/include/c++/11/bits/invoke.h \
- /usr/include/c++/11/bits/quoted_string.h
+ /usr/include/c++/11/bits/quoted_string.h /usr/include/c++/11/chrono \
+ /usr/include/c++/11/ratio /usr/include/c++/11/bits/parse_numbers.h

@@ -129,6 +129,56 @@ CNN/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/CNN.dir/build.make CMakeFiles/CNN.dir/build
 .PHONY : CNN/fast
 
+#=============================================================================
+# Target rules for targets named SERVER
+
+# Build rule for target.
+SERVER: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 SERVER
+.PHONY : SERVER
+
+# fast build rule for target.
+SERVER/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/build
+.PHONY : SERVER/fast
+
+#=============================================================================
+# Target rules for targets named CLIENT
+
+# Build rule for target.
+CLIENT: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CLIENT
+.PHONY : CLIENT
+
+# fast build rule for target.
+CLIENT/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/build
+.PHONY : CLIENT/fast
+
+client.o: client.cpp.o
+.PHONY : client.o
+
+# target to build an object file
+client.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/client.cpp.o
+.PHONY : client.cpp.o
+
+client.i: client.cpp.i
+.PHONY : client.i
+
+# target to preprocess a source file
+client.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/client.cpp.i
+.PHONY : client.cpp.i
+
+client.s: client.cpp.s
+.PHONY : client.s
+
+# target to generate assembly for a file
+client.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/client.cpp.s
+.PHONY : client.cpp.s
+
 cnn.o: cnn.cpp.o
 .PHONY : cnn.o
 
@@ -153,6 +203,30 @@ cnn.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/CNN.dir/build.make CMakeFiles/CNN.dir/cnn.cpp.s
 .PHONY : cnn.cpp.s
 
+server.o: server.cpp.o
+.PHONY : server.o
+
+# target to build an object file
+server.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/server.cpp.o
+.PHONY : server.cpp.o
+
+server.i: server.cpp.i
+.PHONY : server.i
+
+# target to preprocess a source file
+server.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/server.cpp.i
+.PHONY : server.cpp.i
+
+server.s: server.cpp.s
+.PHONY : server.s
+
+# target to generate assembly for a file
+server.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/server.cpp.s
+.PHONY : server.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -161,10 +235,18 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... CLIENT"
 	@echo "... CNN"
+	@echo "... SERVER"
+	@echo "... client.o"
+	@echo "... client.i"
+	@echo "... client.s"
 	@echo "... cnn.o"
 	@echo "... cnn.i"
 	@echo "... cnn.s"
+	@echo "... server.o"
+	@echo "... server.i"
+	@echo "... server.s"
 .PHONY : help
 
 

@@ -1,32 +1,65 @@
-// C++ program to illustrate the client application in the 
-// socket programming 
-#include <cstring> 
-#include <iostream> 
-#include <netinet/in.h> 
-#include <sys/socket.h> 
-#include <unistd.h> 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <iostream>
+
+using namespace std;
+const char* host = "0.0.0.0";
+int port = 7000;
 
 int main() 
 { 
-	// creating socket 
-	int clientSocket = socket(AF_INET, SOCK_STREAM, 0); 
+	int clientSocket;
+    struct sockaddr_in serverAddress;
+    int status;
+    char indata[1024] = {0}, outdata[1024] = {0};
+	char a_data[1024] = {0};
+	int i_data = 0; 
+
+    // create a socket
+    clientSocket = socket(AF_INET, SOCK_STREAM, 0); 
+    if (clientSocket == -1) 
+	{
+        perror("Socket creation error");
+        exit(1);
+    }
 
 	// specifying address 
-	sockaddr_in serverAddress; 
-	serverAddress.sin_family = AF_INET; 
-	serverAddress.sin_port = htons(8080); 
-	serverAddress.sin_addr.s_addr = INADDR_ANY; 
+	serverAddress.sin_family = AF_INET;
+    inet_aton(host, &serverAddress.sin_addr);
+    serverAddress.sin_port = htons(port);
 
-	// sending connection request 
-	connect(clientSocket, (struct sockaddr*)&serverAddress, 
-			sizeof(serverAddress)); 
+	status = connect(clientSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
+    if (status == -1) 
+	{
+        perror("Connection error");
+        exit(1);
+    }
 
-	// sending data 
-	const char* message = "Hello, server!"; 
-	send(clientSocket, message, strlen(message), 0); 
+	while (1) 
+	{
+		printf("Please input message: ");
+		cin.getline(outdata, sizeof(outdata)); // Use getline for safer input
 
-	// closing socket 
-	close(clientSocket); 
+		printf("send: %s\n", outdata);
+		send(clientSocket, outdata, strlen(outdata), 0);
+
+		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
+		if (nbytes <= 0) {
+			close(clientSocket);
+			printf("Server closed connection.\n");
+			break;
+		}
+		printf("recv: %s\n", indata);
+
+		// Clear outdata for the next message
+		memset(indata, 0, sizeof(indata));
+		memset(outdata, 0, sizeof(outdata));
+	}
 
 	return 0; 
 }
