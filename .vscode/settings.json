@@ -7,6 +7,12 @@
         "array": "cpp",
         "string": "cpp",
         "string_view": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "fstream": "cpp",
+        "*.tcc": "cpp",
+        "ostream": "cpp",
+        "ratio": "cpp",
+        "initializer_list": "cpp",
+        "utility": "cpp"
     }
 }

@@ -6,10 +6,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
+#include <cmath>
 
 using namespace std;
 const char* host = "0.0.0.0";
 int port = 7000;
+
+double sigmoid(double x) 
+{
+	if (x > 500) x = 500;
+	if (x < -500) x = -500;
+	return 1 / (1 + exp(-x));
+}
 
 int main() 
 { 
@@ -17,9 +25,9 @@ int main()
     struct sockaddr_in serverAddress;
     int status;
     char indata[1024] = {0}, outdata[1024] = {0};
-	char a_data[1024] = {0};
-	int i_data = 0; 
-
+	double in_data = 0;
+	double sig_data = 0;
+	
     // create a socket
     clientSocket = socket(AF_INET, SOCK_STREAM, 0); 
     if (clientSocket == -1) 
@@ -44,11 +52,27 @@ int main()
 	{
 		printf("Please input message: ");
 		cin.getline(outdata, sizeof(outdata)); // Use getline for safer input
-
 		printf("send: %s\n", outdata);
 		send(clientSocket, outdata, strlen(outdata), 0);
+		memset(outdata, 0, sizeof(outdata));
 
 		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
+		if (nbytes <= 0) {
+			close(clientSocket);
+			printf("Server closed connection.\n");
+			break;
+		}
+		printf("recv: %s\n", indata);
+		in_data = atof(indata);
+		memset(indata, 0, sizeof(indata));
+
+		sig_data = sigmoid(in_data);
+		sprintf(outdata, "%.3f", sig_data);
+		cout << "sigmood(in_data) : " << sig_data << endl;
+		send(clientSocket, outdata, strlen(outdata), 0);
+		memset(outdata, 0, sizeof(outdata));
+
+		nbytes = recv(clientSocket, indata, sizeof(indata), 0);
 		if (nbytes <= 0) {
 			close(clientSocket);
 			printf("Server closed connection.\n");

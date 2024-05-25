@@ -492,6 +492,105 @@ int give_prediction()
 	return max_pos;
 }
 
+void write_weight_bais()
+{
+	ofstream conv_w_txt;
+	ofstream conv_b_txt;
+	ofstream dense_w_txt;
+	ofstream dense_b_txt;
+	ofstream dense_w2_txt;
+	ofstream dense_b2_txt;
+	conv_w_txt.open("conv_w.txt");
+	if (!conv_w_txt.is_open()) 
+	{
+        cout << "Failed to open file conv_w.\n";
+    }
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 5; i++) 
+		{
+			for (int j = 0; j < 5; j++) 
+			{
+				conv_w_txt << conv_w[filter_dim][i][j] << " ";
+			}
+			conv_w_txt << "\n";
+		}
+		conv_w_txt << "\n";
+	}
+	conv_w_txt.close();
+
+	conv_b_txt.open("conv_b.txt");
+	if (!conv_b_txt.is_open()) 
+	{
+        cout << "Failed to open file conv_b.\n";
+    }
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 28; i++) 
+		{
+			for (int j = 0; j < 28; j++) 
+			{
+				conv_b_txt << conv_b[filter_dim][i][j] << " ";
+			}
+			conv_b_txt << "\n";
+		}
+		conv_b_txt << "\n";
+	}
+	conv_b_txt.close();
+
+	dense_w_txt.open("dense_w.txt");
+	if (!dense_w_txt.is_open()) 
+	{
+        cout << "Failed to open file dense_w.\n";
+    }
+	for (int i = 0; i < 1568; i++) 
+	{
+		for (int j = 0; j < 120; j++) 
+		{
+			dense_w_txt << dense_w[i][j] << " ";
+		}
+		dense_w_txt << "\n\n";
+	}
+	dense_w_txt.close();
+
+	dense_b_txt.open("dense_b.txt");
+	if (!dense_b_txt.is_open()) 
+	{
+        cout << "Failed to open file dense_b.\n";
+    }
+	for (int i = 0; i < 120; i++) 
+	{
+		dense_b_txt << dense_b[i] << "\n";
+	}
+	dense_b_txt.close();
+
+	dense_w2_txt.open("dense_w2.txt");
+	if (!dense_w2_txt.is_open()) 
+	{
+        cout << "Failed to open file dense_w2.\n";
+    }
+	for (int i = 0; i < 120; i++) 
+	{
+		for (int j = 0; j < 10; j++) 
+		{
+			dense_w2_txt << dense_w2[i][j] << " ";
+		}
+		dense_w2_txt << "\n\n";
+	}
+	dense_w2_txt.close();
+
+	dense_b2_txt.open("dense_b2.txt");
+	if (!dense_b2_txt.is_open()) 
+	{
+        cout << "Failed to open file dense_b2.\n";
+    }
+	for (int i = 0; i < 10; i++) 
+	{
+		dense_b2_txt << dense_b2[i] << "\n";
+	}
+	dense_b2_txt.close();
+}
+
 int main(int argc, char *argv[]) 
 {
 	time_t start, end;
@@ -520,6 +619,8 @@ int main(int argc, char *argv[])
 		}
 	}
 	cout << endl;
+
+	write_weight_bais();
 	auto endTime = chrono::high_resolution_clock::now();
 	chrono::duration<double, milli> elapsed = endTime - startTime;
 

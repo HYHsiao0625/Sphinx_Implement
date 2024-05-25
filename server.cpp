@@ -19,10 +19,9 @@ int main()
     struct sockaddr_in my_addr, client_addr;
     int status;
     char indata[1024] = {0}, outdata[1024] = {0};
-	char a_data[1024] = {0};
-	int i_data = 0; 
+	double in_data = 0;
+    double a = 0, b = 0;
     int on = 1;
-
     // create a socket
     sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_fd == -1) 
@@ -77,13 +76,40 @@ int main()
                 break;
             }
 			printf("recv: %s\n", indata);
+            // a * x + b //
+            // a = 5 //
+            // b = 2 //
+			in_data = atof(indata);
+            memset(indata, 0, sizeof(indata));
 
-			int i_data = atoi(indata);
-			i_data = i_data * 2 + 1000;
-            sprintf(outdata, "echo %d", i_data);
+            a = 5;
+            b = 0.25;
+			in_data = in_data * a + b;
+            sprintf(outdata, "%.3f", in_data);
             send(new_fd, outdata, strlen(outdata), 0);
-			memset(indata, 0, sizeof(indata));
-			memset(outdata, 0, sizeof(outdata));
+            memset(outdata, 0, sizeof(outdata));
+
+            nbytes = recv(new_fd, indata, sizeof(indata), 0);
+            if (nbytes <= 0) 
+			{
+                close(new_fd);
+                printf("client closed connection.\n");
+                break;
+            }
+			printf("recv: %s\n", indata);
+            in_data = atof(indata);
+            memset(indata, 0, sizeof(indata));
+
+            a = 5;
+            b = 0.25;
+			in_data = in_data * a + b;
+            sprintf(outdata, "%.3f", in_data);
+            send(new_fd, outdata, strlen(outdata), 0);
+            
+
+		    // Clear outdata for the next message
+            memset(indata, 0, sizeof(indata));
+            memset(outdata, 0, sizeof(outdata));
         }
     }
     close(sock_fd);
