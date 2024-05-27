@@ -112,6 +112,7 @@ int main()
                 cout << endl;
             }
             cout << "k: " << k << endl;
+            
             int nbytes = recv(new_fd, indata, sizeof(indata), 0);
             if (nbytes <= 0) 
             {
@@ -119,20 +120,7 @@ int main()
                 printf("client closed connection.\n");
                 break;
             }
-            /*
-            // a * x + b //
-            // a = 5 //
-            // b = 2 //
-			in_data = atof(indata);
-            memset(indata, 0, sizeof(indata));
 
-            a = 5;
-            b = 0.25;
-			in_data = in_data * a + b;
-            sprintf(outdata, "%.3f", in_data);
-            send(new_fd, outdata, strlen(outdata), 0);
-            memset(outdata, 0, sizeof(outdata));
-		    */
             // Clear outdata for the next message
             memset(indata, 0, sizeof(indata));
             memset(outdata, 0, sizeof(outdata));

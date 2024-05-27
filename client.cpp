@@ -140,38 +140,6 @@ int main()
 
 	while (1) 
 	{
-		
-		/*
-		printf("Please input message: ");
-		cin.getline(outdata, sizeof(outdata)); // Use getline for safer input
-		printf("send: %s\n", outdata);
-		send(clientSocket, outdata, strlen(outdata), 0);
-		memset(outdata, 0, sizeof(outdata));
-
-		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
-		if (nbytes <= 0) {
-			close(clientSocket);
-			printf("Server closed connection.\n");
-			break;
-		}
-		printf("recv: %s\n", indata);
-		in_data = atof(indata);
-		memset(indata, 0, sizeof(indata));
-
-		sig_data = sigmoid(in_data);
-		sprintf(outdata, "%.3f", sig_data);
-		cout << "sigmood(in_data) : " << sig_data << endl;
-		send(clientSocket, outdata, strlen(outdata), 0);
-		memset(outdata, 0, sizeof(outdata));
-
-		nbytes = recv(clientSocket, indata, sizeof(indata), 0);
-		if (nbytes <= 0) {
-			close(clientSocket);
-			printf("Server closed connection.\n");
-			break;
-		}
-		printf("recv: %s\n", indata);
-		*/
 		auto startTime = chrono::high_resolution_clock::now();
 		int data_size = 32 * 32;
 		int k = 0;
