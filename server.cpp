@@ -6,6 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
+#include <cmath>
+#include <cstdlib>
+#include <sstream>
+#include <fstream>
+#include <vector>
+#include <iomanip>
+#include <chrono>
 
 using namespace std;
 
@@ -67,15 +74,52 @@ int main()
             ntohs(client_addr.sin_port));
 
         while (1) 
-		{
+		{   
+            int data_size = 32 * 32;
+            int k = 0;
+            vector<vector<int>> enc_img(32, vector<int>(32, 0));
+            auto startTime = chrono::high_resolution_clock::now();
+            do
+            {
+                int nbytes = recv(new_fd, indata, sizeof(indata), 0);
+                if (nbytes <= 0) 
+                {
+                    close(new_fd);
+                    printf("client closed connection.\n");
+                    break;
+                }
+                enc_img[k / 32][k % 32] = atoi(indata);
+                data_size--;
+                k++;
+                memset(indata, 0, sizeof(indata));
+            } while (data_size > 0);
+            auto endTime = chrono::high_resolution_clock::now();
+            chrono::duration<double, milli> elapsed = endTime - startTime;
+
+            double elapsedSeconds = elapsed.count() / 1000.0;
+            int elapsedMinutes = static_cast<int>(elapsedSeconds / 60);
+            int elapsedSeconds_ = static_cast<int>(elapsedSeconds) % 60;
+            int elapsedMilliseconds = static_cast<int>(elapsedSeconds * 1000) % 1000;
+            cout << fixed << setprecision(10);
+            cout << "Training time : " << elapsedMinutes << "m " << elapsedSeconds_ << "s " << elapsedMilliseconds << "ms";
+            cout << endl;
+            for (int i = 0; i < 32; i++)
+            {
+                for (int j = 0; j < 32; j++)
+                {
+                    cout << setw(3) << enc_img[i][j];
+                }
+                cout << endl;
+            }
+            cout << "k: " << k << endl;
             int nbytes = recv(new_fd, indata, sizeof(indata), 0);
             if (nbytes <= 0) 
-			{
+            {
                 close(new_fd);
                 printf("client closed connection.\n");
                 break;
             }
-			printf("recv: %s\n", indata);
+            /*
             // a * x + b //
             // a = 5 //
             // b = 2 //
@@ -88,26 +132,8 @@ int main()
             sprintf(outdata, "%.3f", in_data);
             send(new_fd, outdata, strlen(outdata), 0);
             memset(outdata, 0, sizeof(outdata));
-
-            nbytes = recv(new_fd, indata, sizeof(indata), 0);
-            if (nbytes <= 0) 
-			{
-                close(new_fd);
-                printf("client closed connection.\n");
-                break;
-            }
-			printf("recv: %s\n", indata);
-            in_data = atof(indata);
-            memset(indata, 0, sizeof(indata));
-
-            a = 5;
-            b = 0.25;
-			in_data = in_data * a + b;
-            sprintf(outdata, "%.3f", in_data);
-            send(new_fd, outdata, strlen(outdata), 0);
-            
-
-		    // Clear outdata for the next message
+		    */
+            // Clear outdata for the next message
             memset(indata, 0, sizeof(indata));
             memset(outdata, 0, sizeof(outdata));
         }

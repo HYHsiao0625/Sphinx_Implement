@@ -374,7 +374,6 @@ void backward_pass(vector<double> y_hat, vector<int> y, vector<vector<int>> img)
 }
 /* ************************************************************ */
 
-
 void read_train_data()
 {
 	ifstream csvread;
@@ -412,6 +411,7 @@ void read_train_data()
 		cerr << "Can not read data!" << endl;
 	}
 }
+
 void read_test_data() 
 {
 	ifstream csvread;
@@ -457,9 +457,9 @@ void give_img(vector<int> vec, vector<vector<int>>& img)
 	{
 		for (int j = 0; j < 32; j++) 
 		{
-			if (i < 2 || j < 2) 
+			if (i < 2 || j < 2 || i > 29 || j > 29) 
 			{
-				continue;
+				img[i][j] = 0;
 			}
 			else 
 			{
@@ -597,7 +597,6 @@ int main(int argc, char *argv[])
 	read_test_data();
 	read_train_data();
 	initialise_weights();
-	
 	int epoch = stoi(argv[1]);
 	int num = 0;
 	cout << "Start Training." << endl;
