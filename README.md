@@ -26,4 +26,16 @@ graph LR;
 - [x] Server & Client 明文溝通
 - [ ] 部署CNN models至Server & Client
     - [ ] 使用明文
+        - [ ] Forward_pass
+            - [x] Convolution Layer
+            - [x] send Sigmoid & recv Sigmoid
+            - [x] MaxPooling Layer
+            - [ ] Dense Layer
+                - [ ] Dense_Sum
+                - [ ] send Dense_Sigmoid & recv Dense_Sigmoid
+            - [ ] Dense Layer 2
+                - [ ] Dense_Sum 2
+                - [ ] send Dense_Sigmoid 2 & recv Dense_Sigmoid 2
+            - [ ] send Softmax Output & recv Softmax Output
+            - [ ] Update_Weights
     - [ ] 使用密文
