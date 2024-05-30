@@ -167,7 +167,18 @@ void forward_pass(vector<vector<int>> img)
 		}
 	}
 
-
+	int k = 0;
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 14; i++) 
+		{
+			for (int j = 0; j < 14; j++) 
+			{
+				dense_input[k] = max_layer[filter_dim][i][j];
+				k++;
+			}
+		}
+	}
 	// Dense Layer
 	for (int i = 0; i < 120; i++) 
 	{

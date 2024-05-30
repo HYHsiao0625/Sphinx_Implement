@@ -39,3 +39,7 @@ graph LR;
             - [ ] send Softmax Output & recv Softmax Output
             - [ ] Update_Weights
     - [ ] 使用密文
+## TO FIX
+location: client 553
+sigmoid 轉換出來會有nan跟-nan
+

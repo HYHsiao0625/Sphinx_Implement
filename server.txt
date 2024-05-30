@@ -22,8 +22,8 @@ int port = 7000;
 /* ************************************************************ */
 /* Training Parameter */
 const int filter_size = 5;
-const double eta = 0.001;
-const int batch_size = 1;
+const double eta = 0.01;
+const int batch_size = 200;
 
 /* ************************************************************ */
 /* Encryption Weight */
@@ -171,7 +171,7 @@ int main()
                 printf("client closed connection.\n");
                 break;
             }
-            enc_dense_w[(k / 120) % 1568][k % 120] = atof(indata);
+            enc_dense_w[k / 120][k % 120] = atof(indata);
             data_size--;
             k++;
             memset(indata, 0, sizeof(indata));
@@ -205,7 +205,7 @@ int main()
                 printf("client closed connection.\n");
                 break;
             }
-            enc_dense_w2[(k / 10) % 120][k % 10] = atof(indata);
+            enc_dense_w2[k / 10][k % 10] = atof(indata);
             data_size--;
             k++;
             memset(indata, 0, sizeof(indata));
@@ -256,12 +256,11 @@ int main()
                     k++;
                     memset(indata, 0, sizeof(indata));
                 } while (data_size > 0);
-                
+
                 data_size = 10;
                 k = 0;
                 do
                 {
-                    enc_vector_y[k] = 0;
                     int nbytes = recv(new_fd, indata, sizeof(indata), 0);
                     if (nbytes <= 0) 
                     {
@@ -270,6 +269,7 @@ int main()
                         break;
                     }
                     enc_vector_y[k] = atoi(indata);
+                    cout << enc_vector_y[k];
                     data_size--;
                     k++;
                     memset(indata, 0, sizeof(indata));
@@ -380,6 +380,7 @@ int main()
                     for (int j = 0; j < 1568; j++) 
                     {
                         enc_dense_sum[i] += enc_dense_w[j][i] * enc_dense_input[j];
+                        
                     }
                     enc_dense_sum[i] += enc_dense_b[i];
                     //dense_sigmoid[i] = sigmoid(dense_sum[i]);

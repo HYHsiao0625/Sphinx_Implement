@@ -13,6 +13,8 @@
         "ostream": "cpp",
         "ratio": "cpp",
         "initializer_list": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "cmath": "cpp",
+        "iomanip": "cpp"
     }
 }
