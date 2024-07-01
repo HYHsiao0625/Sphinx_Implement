@@ -21,8 +21,8 @@ const char* host = "0.0.0.0";
 int port = 7000;
 
 const int filter_size = 5;
-const double eta = 0.001;
-const int batch_size = 1;
+const double eta = 0.01;
+const int batch_size = 100;
 
 /* ************************************************************ */
 /* MNIST Data */
@@ -91,10 +91,12 @@ double d_sigmoid(double x)
 double softmax_den(vector<double> x, int len) 
 {
 	double val = 0;
-	for (int i = 0; i < len; i++) 
+	for (int i = 0; i < len; i++)
 	{
+		cout << "x_" << i << " = " << x[i] << endl; 
 		val += exp(x[i]);
 	}
+	cout << "val = " << val << endl;
 	return val;
 }
 
@@ -550,7 +552,6 @@ int main()
 			{
 				sprintf(outdata, "%f", enc_sig_layer[k / 784][(k / 28) % 28][k % 28]);
 				send(clientSocket, outdata, sizeof(outdata), 0);
-				cout << enc_sig_layer[k / 784][(k / 28) % 28][k % 28] << flush;
 				data_size--;
 				k++;
 				memset(outdata, 0, sizeof(outdata));
@@ -568,6 +569,7 @@ int main()
 					break;
 				}
 				enc_dense_input[k] = atof(indata);
+				//cout << "\r" << enc_dense_input[k] << flush;
 				data_size--;
 				k++;
 				memset(indata, 0, sizeof(indata));
@@ -596,7 +598,7 @@ int main()
 
 				//sigmoid
 				enc_dense_sigmoid[i] = sigmoid(enc_dense_sum[i]);
-			
+				//cout << "\r" << enc_dense_sigmoid[i] << flush;
 				//encryption
 			}
 
@@ -625,6 +627,7 @@ int main()
 					break;
 				}
 				enc_dense_sum2[k] = atof(indata);
+				cout << enc_dense_sum2[k];
 				data_size--;
 				k++;
 				memset(indata, 0, sizeof(indata));
@@ -637,7 +640,7 @@ int main()
 				//decryption
 
 				enc_dense_softmax[i] = exp(enc_dense_sum2[i]) / den;
-
+				cout << exp(enc_dense_sum2[i]) << " / " << den << " = " << enc_dense_softmax[i] << endl;
 				//encryption
 			}
 
@@ -735,8 +738,8 @@ int main()
 			memset(outdata, 0, sizeof(outdata));
 		}
 	}
-	cout << "Training over."<< endl;
-	cout << "Receive Weight..."<< endl;
+	cout << "Training over." << endl;
+	cout << "Receive Weight..." << endl;
 
 	data_size = 8 * 5 * 5;
 	k = 0;
@@ -854,6 +857,7 @@ int main()
 			confusion_mat[i][j] = 0;
 		}
 	}
+	cout << endl;
 	cout << "Start Testing." << endl;
 	for (int i = 0; i < val_len; i++) 
 	{

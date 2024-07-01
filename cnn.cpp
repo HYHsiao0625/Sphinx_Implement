@@ -65,6 +65,7 @@ double softmax_den(vector<double> x, int len)
 	{
 		val += exp(x[i]);
 	}
+	cout << val << endl;
 	return val;
 }
 
