@@ -61,11 +61,10 @@ double d_sigmoid(double x)
 double softmax_den(vector<double> x, int len) 
 {
 	double val = 0;
-	for (int i = 0; i < len; i++) 
+	for (int i = 0; i < len; i++)
 	{
 		val += exp(x[i]);
 	}
-	cout << val << endl;
 	return val;
 }
 
@@ -124,7 +123,6 @@ void forward_pass(vector<vector<int>> img)
 			for (int j = 0; j < 28; j++) 
 			{
 				max_pooling[filter_dim][i][j] = 0;
-
 				conv_layer[filter_dim][i][j] = 0;
 				sig_layer[filter_dim][i][j] = 0;
 				for (int k = 0; k < filter_size; k++) 
@@ -139,6 +137,19 @@ void forward_pass(vector<vector<int>> img)
 		}
 	}
 	
+	for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 28; j++)
+            {
+                for (int k = 0; k < 28; k++)
+                {
+                    cout << setprecision(4) << conv_layer[i][j][k] << " ";
+                }
+                cout << endl;
+            }
+            cout << endl;
+        }
+        cout << endl;
 	// MAX Pooling (max_pooling, max_layer)
 	double cur_max = 0;
 	int max_i = 0, max_j = 0;

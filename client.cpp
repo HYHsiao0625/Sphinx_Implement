@@ -8,6 +8,7 @@
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
+#include <ctime> 
 #include <sstream>
 #include <fstream>
 #include <vector>
@@ -22,7 +23,7 @@ int port = 7000;
 
 const int filter_size = 5;
 const double eta = 0.01;
-const int batch_size = 100;
+const int batch_size = 20;
 
 /* ************************************************************ */
 /* MNIST Data */
@@ -73,7 +74,7 @@ vector<double> dense_softmax(10, 0);
 /* Helper Functions */
 double sigmoid(double x) 
 {
-	if (isnan(x))
+	if(isnan(x))
 	{
 		return 0.5;
 	}
@@ -93,57 +94,9 @@ double softmax_den(vector<double> x, int len)
 	double val = 0;
 	for (int i = 0; i < len; i++)
 	{
-		cout << "x_" << i << " = " << x[i] << endl; 
 		val += exp(x[i]);
 	}
-	cout << "val = " << val << endl;
 	return val;
-}
-
-/* ************************************************************ */
-
-void initialise_weights() 
-{
-	for (int i = 0; i < 8; i++) 
-	{
-		for (int j = 0; j < 28; j++) 
-		{
-			for (int k = 0; k < 28; k++) 
-			{
-				if (j < 5 && k < 5) 
-				{
-					enc_conv_w[i][j][k] = 2 * double(rand()) / RAND_MAX - 1; // Random double value between -1 and 1
-				}
-				enc_conv_b[i][j][k] = 2 * double(rand()) / RAND_MAX - 1; // Random double value between -1 and 1
-			}
-		}
-	}
-
-	for (int i = 0; i < 1568; i++) 
-	{
-		for (int j = 0; j < 120; j++) 
-		{
-			enc_dense_w[i][j] = 2 * double(rand()) / RAND_MAX - 1;
-		}
-	}
-
-	for (int i = 0; i < 120; i++) 
-	{
-		enc_dense_b[i] = 2 * double(rand()) / RAND_MAX - 1;
-	}
-
-	for (int i = 0; i < 120; i++) 
-	{
-		for (int j = 0; j < 10; j++) 
-		{
-			enc_dense_w2[i][j] = 2 * double(rand()) / RAND_MAX - 1;
-		}
-	}
-
-	for (int i = 0; i < 10; i++) 
-	{
-		enc_dense_b2[i] = 2 * double(rand()) / RAND_MAX - 1;
-	}
 }
 
 /* ************************************************************ */
@@ -374,11 +327,11 @@ int main()
 	int clientSocket;
     struct sockaddr_in serverAddress;
     int status;
-    char indata[1024] = {0}, outdata[1024] = {0};
-	double in_data = 0;
-	double sig_data = 0;
+    char indata[64] = {0}, outdata[64] = {0};
 	int epochs;
-
+	int data_size = 0;
+	int k = 0;
+	srand(time(NULL));
     // create a socket
     clientSocket = socket(AF_INET, SOCK_STREAM, 0); 
     if (clientSocket == -1) 
@@ -407,90 +360,25 @@ int main()
 	send(clientSocket, outdata, sizeof(outdata), 0);
 	memset(outdata, 0, sizeof(outdata));
 
-	cout << "Read Train Data & Initialize Weight..." << endl;
+	cout << "Read Train Data..." << endl;
 	read_train_data();
 	read_test_data();
-	initialise_weights();
-
-	cout << "Send Initialize Weight to Server..." << endl;
-	int data_size = 8 * 5 * 5;
-	int k = 0;
-	do
-	{
-		sprintf(outdata, "%f", enc_conv_w[k / 25][(k / 5) % 5][k % 5]);
-		send(clientSocket, outdata, sizeof(outdata), 0);
-		data_size--;
-		k++;
-		memset(outdata, 0, sizeof(outdata));
-	} while (data_size > 0);
-
-	data_size = 8 * 28 * 28;
-	k = 0;
-	do
-	{
-		sprintf(outdata, "%f", enc_conv_b[k / 784][(k / 28) % 28][k % 28]);
-		send(clientSocket, outdata, sizeof(outdata), 0);
-		data_size--;
-		k++;
-		memset(outdata, 0, sizeof(outdata));
-	} while (data_size > 0);
-
-	data_size = 1568 * 120;
-	k = 0;
-	do
-	{
-		sprintf(outdata, "%f", enc_dense_w[k / 120][k % 120]);
-		send(clientSocket, outdata, sizeof(outdata), 0);
-		data_size--;
-		k++;
-		memset(outdata, 0, sizeof(outdata));
-	} while (data_size > 0);
-
-	data_size = 120;
-	k = 0;
-	do
-	{
-		sprintf(outdata, "%f", enc_dense_b[k]);
-		send(clientSocket, outdata, sizeof(outdata), 0);
-		data_size--;
-		k++;
-		memset(outdata, 0, sizeof(outdata));
-	} while (data_size > 0);
-
-	data_size = 120 * 10;
-	k = 0;
-	do
-	{
-		sprintf(outdata, "%f", enc_dense_w2[k / 10][k % 10]);
-		send(clientSocket, outdata, sizeof(outdata), 0);
-		data_size--;
-		k++;
-		memset(outdata, 0, sizeof(outdata));
-	} while (data_size > 0);
-	
-	data_size = 10;
-	k = 0;
-	do
-	{
-		sprintf(outdata, "%f", enc_dense_b2[k]);
-		send(clientSocket, outdata, sizeof(outdata), 0);
-		data_size--;
-		k++;
-		memset(outdata, 0, sizeof(outdata));
-	} while (data_size > 0);
-
 	cout << "Start Training." << endl;
 	auto startTime = chrono::high_resolution_clock::now();
 	for (int i = 0; i < epochs; i++)
 	{
 		for (int j = 0; j < batch_size; j++)
 		{
+			cout << "Epoch: " << i << " --------- " << setw(3) << j << " / " << batch_size << "." << endl;
 			vector<vector<int>> img(32, vector<int>(32, 0));
 			vector<int> vector_y(10, 0);
 			int num = rand() % 60000;
 			give_y(label_train[num], vector_y);
 			give_img(data_train[num], img);
 
+			/* Enc(img) */
+
+			/* Sending img*/
 			data_size = 32 * 32;
 			k = 0;
 			do
@@ -500,19 +388,10 @@ int main()
 				data_size--;
 				k++;
 				memset(outdata, 0, sizeof(outdata));
-			} while (data_size > 0);
+			}while(data_size > 0);
+			/* ********** TEST PASS ********** */
 			
-			data_size = 10;
-			k = 0;
-			do
-			{
-				sprintf(outdata, "%d", vector_y[k]);
-				send(clientSocket, outdata, sizeof(outdata), 0);
-				data_size--;
-				k++;
-				memset(outdata, 0, sizeof(outdata));
-			} while (data_size > 0);
-			
+			/* Receiving ENC(conv_layer)*/
 			data_size = 8 * 28 * 28;
 			k = 0;
 			do
@@ -521,31 +400,34 @@ int main()
 				if (nbytes <= 0) 
 				{
 					close(clientSocket);
-					printf("client closed connection.\n");
+					printf("Receiving ENC(conv_layer) client closed connection.\n");
 					break;
 				}
 				enc_conv_layer[k / 784][(k / 28) % 28][k % 28] = atof(indata);
 				data_size--;
 				k++;
 				memset(indata, 0, sizeof(indata));
-			} while (data_size > 0);
-
+			}while(data_size > 0);
+			/* ********** TEST PASS ********** */
+			
 			for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 			{
 				for (int i = 0; i < 28; i++) 
 				{
 					for (int j = 0; j < 28; j++) 
 					{
-						//decryption
+						/* DEC(enc_conv_layer) */
 
-						//sigmoid
+						/* SIG(conv_layer) */
 						enc_sig_layer[filter_dim][i][j] = sigmoid(enc_conv_layer[filter_dim][i][j]);
 						
-						//encryption
+						/* ENC(sig_layer) */
 					}
 				}
 			}
-			
+			/* ********** TEST PASS ********** */
+
+			/* Sending ENC(sig_layer)*/
 			data_size = 8 * 28 * 28;
 			k = 0;
 			do
@@ -555,8 +437,10 @@ int main()
 				data_size--;
 				k++;
 				memset(outdata, 0, sizeof(outdata));
-			} while (data_size > 0);
+			}while(data_size > 0);
+			/* ********** TEST PASS ********** */
 
+			/* Receive ENC(dense_input) for Backward pass*/
 			data_size = 1568;
 			k = 0;
 			do
@@ -565,7 +449,7 @@ int main()
 				if (nbytes <= 0) 
 				{
 					close(clientSocket);
-					printf("client closed connection.\n");
+					printf("Receive ENC(dense_input) client closed connection.\n");
 					break;
 				}
 				enc_dense_input[k] = atof(indata);
@@ -573,8 +457,10 @@ int main()
 				data_size--;
 				k++;
 				memset(indata, 0, sizeof(indata));
-			} while (data_size > 0);
+			}while(data_size > 0);
+			/* ********** TEST PASS ********** */
 
+			/* Receive ENC(dense_sum)*/
 			data_size = 120;
 			k = 0;
 			do
@@ -583,27 +469,26 @@ int main()
 				if (nbytes <= 0) 
 				{
 					close(clientSocket);
-					printf("client closed connection.\n");
+					printf("Receive ENC(dense_sum) client closed connection.\n");
 					break;
 				}
 				enc_dense_sum[k] = atof(indata);
 				data_size--;
 				k++;
 				memset(indata, 0, sizeof(indata));
-			} while (data_size > 0);
+			}while (data_size > 0);
+			/* ********** TEST PASS ********** */
 
 			for (int i = 0; i < 120; i++) 
 			{
-				//decryption
+				//DEC(enc_dense_sum)
 
-				//sigmoid
+				//SIG(dense_sum)
 				enc_dense_sigmoid[i] = sigmoid(enc_dense_sum[i]);
-				//cout << "\r" << enc_dense_sigmoid[i] << flush;
-				//encryption
+				//ENC(dense_sigmoid)
 			}
 
-			// Dense Layer 2
-
+			/* Sending ENC(dense_sigmoid)*/
 			data_size = 120;
 			k = 0;
 			do
@@ -613,8 +498,10 @@ int main()
 				data_size--;
 				k++;
 				memset(outdata, 0, sizeof(outdata));
-			} while (data_size > 0);
+			}while(data_size > 0);
+			/* ********** TEST PASS ********** */
 
+			/* Receive ENC(dense_sum2)*/
 			data_size = 10;
 			k = 0;
 			do
@@ -623,27 +510,39 @@ int main()
 				if (nbytes <= 0) 
 				{
 					close(clientSocket);
-					printf("client closed connection.\n");
+					printf("Receive ENC(dense_sum2) client closed connection.\n");
 					break;
 				}
 				enc_dense_sum2[k] = atof(indata);
-				cout << enc_dense_sum2[k];
 				data_size--;
 				k++;
 				memset(indata, 0, sizeof(indata));
-			} while (data_size > 0);
+			}while(data_size > 0);
+			/* ********** TEST PASS ********** */
 
-			// Softmax Output
-			double den = softmax_den(enc_dense_sum2, 10);
+			/* Softmax Output */
+			double den = 0;
+			den = softmax_den(enc_dense_sum2, 10);
 			for (int i = 0; i < 10; i++) 
 			{
-				//decryption
+				/* DEC(enc_dense_sum2) */
 
+				/* Softmax(dense_sum2) */
 				enc_dense_softmax[i] = exp(enc_dense_sum2[i]) / den;
-				cout << exp(enc_dense_sum2[i]) << " / " << den << " = " << enc_dense_softmax[i] << endl;
-				//encryption
+				if (enc_dense_softmax[i] < 0.0001)
+				{
+					enc_dense_softmax[i] = 0;
+				}
+				/* ENC(dense_softmax) */
+
 			}
 
+			for (int i = 0; i < 10; i++)
+			{
+				cout << enc_dense_softmax[i] << endl;
+			}
+
+			/* Sending ENC(dense_softmax) */
 			data_size = 10;
 			k = 0;
 			double loss = 0;
@@ -655,232 +554,14 @@ int main()
 				data_size--;
 				k++;
 				memset(outdata, 0, sizeof(outdata));
-			} while (data_size > 0);
+			}while(data_size > 0);
+
+			cout << endl;
 			
-			loss /= 10;
-			//cout << "\rLoss: " << loss << flush; 
-			/* ************************************************************ */
-
-			/* ************************************************************ */
-			/* Backward Pass */
-
-			double enc_delta3[120];
-			data_size = 120;
-			k = 0;
-			do
-			{
-				int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
-				if (nbytes <= 0) 
-				{
-					close(clientSocket);
-					printf("client closed connection.\n");
-					break;
-				}
-				enc_delta3[k] = atof(indata);
-				data_size--;
-				k++;
-				memset(indata, 0, sizeof(indata));
-			} while (data_size > 0);
-
-			for (int i = 0; i < 120; i++)
-			{
-				enc_delta3[i] *= d_sigmoid(enc_dense_sum[i]);
-			}
-
-			data_size = 120;
-			k = 0;
-			do
-			{
-				sprintf(outdata, "%f", enc_delta3[k]);
-				send(clientSocket, outdata, sizeof(outdata), 0);
-				data_size--;
-				k++;
-				memset(outdata, 0, sizeof(outdata));
-			} while (data_size > 0);
-
-			// Delta2
-			
-			double enc_delta2[1568];
-			data_size = 1568;
-			k = 0;
-			do
-			{
-				int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
-				if (nbytes <= 0) 
-				{
-					close(clientSocket);
-					printf("client closed connection.\n");
-					break;
-				}
-				enc_delta2[k] = atof(indata);
-				data_size--;
-				k++;
-				memset(indata, 0, sizeof(indata));
-			} while (data_size > 0);
-
-			for (int i = 0; i < 1568; i++)
-			{
-				enc_delta2[i] *= d_sigmoid(enc_dense_input[i]);
-			}
-
-			data_size = 1568;
-			k = 0;
-			do
-			{
-				sprintf(outdata, "%f", enc_delta2[k]);
-				send(clientSocket, outdata, sizeof(outdata), 0);
-				data_size--;
-				k++;
-				memset(outdata, 0, sizeof(outdata));
-			} while (data_size > 0);
-			// Clear outdata for the next message
+			/* Clear outdata for the next message */
 			memset(indata, 0, sizeof(indata));
 			memset(outdata, 0, sizeof(outdata));
 		}
 	}
-	cout << "Training over." << endl;
-	cout << "Receive Weight..." << endl;
-
-	data_size = 8 * 5 * 5;
-	k = 0;
-	do
-	{
-		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
-		if (nbytes <= 0) 
-		{
-			close(clientSocket);
-			printf("client closed connection.\n");
-			break;
-		}
-		enc_conv_w[k / 25][(k / 5) % 5][k % 5] = atof(indata);
-		//cout << "\r" << enc_conv_w[k / 25][(k / 5) % 5][k % 5] << flush; 
-		data_size--;
-		k++;
-		memset(indata, 0, sizeof(indata));
-	} while (data_size > 0);
-	
-	data_size = 8 * 28 * 28;
-	k = 0;
-	do
-	{
-		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
-		if (nbytes <= 0) 
-		{
-			close(clientSocket);
-			printf("client closed connection.\n");
-			break;
-		}
-		enc_conv_b[k / 784][(k / 28) % 28][k % 28] = atof(indata);
-		data_size--;
-		k++;
-		memset(indata, 0, sizeof(indata));
-	} while (data_size > 0);
-	
-	// Dense Layer Weight
-
-	data_size = 1568 * 120;
-	k = 0;
-	do
-	{
-		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
-		if (nbytes <= 0) 
-		{
-			close(clientSocket);
-			printf("client closed connection.\n");
-			break;
-		}
-		enc_dense_w[k / 120][k % 120] = atof(indata);
-		data_size--;
-		k++;
-		memset(indata, 0, sizeof(indata));
-	} while (data_size > 0);
-	
-	data_size = 120;
-	k = 0;
-	do
-	{
-		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
-		if (nbytes <= 0) 
-		{
-			close(clientSocket);
-			printf("client closed connection.\n");
-			break;
-		}
-		enc_dense_b[k] = atof(indata);
-		data_size--;
-		k++;
-		memset(indata, 0, sizeof(indata));
-	} while (data_size > 0);
-	
-	data_size = 120 * 10;
-	k = 0;
-	do
-	{
-		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
-		if (nbytes <= 0) 
-		{
-			close(clientSocket);
-			printf("client closed connection.\n");
-			break;
-		}
-		enc_dense_w2[k / 10][k % 10] = atof(indata);
-		data_size--;
-		k++;
-		memset(indata, 0, sizeof(indata));
-	} while (data_size > 0);
-	
-	data_size = 10;
-	k = 0;
-	do
-	{
-		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
-		if (nbytes <= 0) 
-		{
-			close(clientSocket);
-			printf("client closed connection.\n");
-			break;
-		}
-		enc_dense_b2[k] = atof(indata);
-		data_size--;
-		k++;
-		memset(indata, 0, sizeof(indata));
-	} while (data_size > 0);
-	cout << endl;
-
-	int val_len = 600;
-	int cor = 0;
-	int confusion_mat[10][10];
-	for (int i = 0; i < 10; i++)
-	{
-		for (int j = 0; j < 10; j++)
-		{
-			confusion_mat[i][j] = 0;
-		}
-	}
-	cout << endl;
-	cout << "Start Testing." << endl;
-	for (int i = 0; i < val_len; i++) 
-	{
-		vector<vector<int>> img(32, vector<int>(32, 0));
-		give_img(data_test[i], img);
-		forward_pass(img);
-		int pre = give_prediction();
-		confusion_mat[label_test[i]][pre]++;
-		if (pre == label_test[i]) cor++;
-	}
-	float accu = double(cor) / val_len;
-	cout << "Accuracy: " << accu << endl;
-
-	cout << "   0 1 2 3 4 5 6 7 8 9" << endl;
-	for (int i = 0; i < 10; i++) 
-	{
-		cout << i << ": ";
-		for (int j = 0; j < 10; j++) 
-		{
-			cout << confusion_mat[i][j] << " ";
-		}
-		cout << endl;
-	}
-	
 	return 0; 
 }
