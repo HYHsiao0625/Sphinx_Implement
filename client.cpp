@@ -555,7 +555,8 @@ int main()
 				k++;
 				memset(outdata, 0, sizeof(outdata));
 			}while(data_size > 0);
-
+			/* ********** TEST PASS ********** */
+			
 			cout << endl;
 			
 			/* Clear outdata for the next message */

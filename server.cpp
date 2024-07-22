@@ -429,18 +429,21 @@ int main()
                     k++;
                     memset(indata, 0, sizeof(indata));
                 } while (data_size > 0);
+                /* ********** TEST PASS ********** */
+                
                 double total = 0;
                 for (int i = 0; i < 10; i++)
                 {
                     total += enc_dense_softmax[i];
                     cout << enc_dense_softmax[i] << endl;
                 }
+
                 cout << "total: " << total;
                 cout << endl;
 
                /* Clear outdata for the next message */
                 memset(indata, 0, sizeof(indata));
-                 memset(outdata, 0, sizeof(outdata));
+                memset(outdata, 0, sizeof(outdata));
             }
         }
         cout << "wait for connection..." << endl;
