@@ -391,7 +391,7 @@ int main()
 			}while(data_size > 0);
 			/* ********** TEST PASS ********** */
 			
-			/* Receiving ENC(conv_layer)*/
+			/* Receiving ENC(conv_layer) */
 			data_size = 8 * 28 * 28;
 			k = 0;
 			do
@@ -399,9 +399,17 @@ int main()
 				int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
 				if (nbytes <= 0) 
 				{
-					close(clientSocket);
-					printf("Receiving ENC(conv_layer) client closed connection.\n");
-					break;
+					if (errno == EAGAIN || errno == EWOULDBLOCK) 
+					{
+						// 稍後再嘗試接收數據
+						continue;
+					}
+					else
+					{
+						printf("Error Receiving ENC(conv_layer): %s\n", strerror(errno));
+						close(clientSocket);
+						exit(1);
+					}
 				}
 				enc_conv_layer[k / 784][(k / 28) % 28][k % 28] = atof(indata);
 				data_size--;
@@ -440,17 +448,25 @@ int main()
 			}while(data_size > 0);
 			/* ********** TEST PASS ********** */
 
-			/* Receive ENC(dense_input) for Backward pass*/
+			/* Receiving ENC(dense_input) for Backward pass */
 			data_size = 1568;
 			k = 0;
 			do
 			{
 				int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
-				if (nbytes <= 0) 
+				if (nbytes <= 0)
 				{
-					close(clientSocket);
-					printf("Receive ENC(dense_input) client closed connection.\n");
-					break;
+					if (errno == EAGAIN || errno == EWOULDBLOCK) 
+					{
+						// 稍後再嘗試接收數據
+						continue;
+					}
+					else
+					{
+						printf("Error Receiving ENC(dense_input): %s\n", strerror(errno));
+						close(clientSocket);
+						exit(1);
+					}
 				}
 				enc_dense_input[k] = atof(indata);
 				//cout << "\r" << enc_dense_input[k] << flush;
@@ -460,7 +476,7 @@ int main()
 			}while(data_size > 0);
 			/* ********** TEST PASS ********** */
 
-			/* Receive ENC(dense_sum)*/
+			/* Receiving ENC(dense_sum)*/
 			data_size = 120;
 			k = 0;
 			do
@@ -468,9 +484,17 @@ int main()
 				int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
 				if (nbytes <= 0) 
 				{
-					close(clientSocket);
-					printf("Receive ENC(dense_sum) client closed connection.\n");
-					break;
+					if (errno == EAGAIN || errno == EWOULDBLOCK) 
+					{
+						// 稍後再嘗試接收數據
+						continue;
+					}
+					else
+					{
+						printf("Error Receiving ENC(img): %s\n", strerror(errno));
+						close(clientSocket);
+						exit(1);
+					}
 				}
 				enc_dense_sum[k] = atof(indata);
 				data_size--;
@@ -501,7 +525,7 @@ int main()
 			}while(data_size > 0);
 			/* ********** TEST PASS ********** */
 
-			/* Receive ENC(dense_sum2)*/
+			/* Receiving ENC(dense_sum2) */
 			data_size = 10;
 			k = 0;
 			do
@@ -509,9 +533,17 @@ int main()
 				int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
 				if (nbytes <= 0) 
 				{
-					close(clientSocket);
-					printf("Receive ENC(dense_sum2) client closed connection.\n");
-					break;
+					if (errno == EAGAIN || errno == EWOULDBLOCK) 
+                        {
+                            // 稍後再嘗試接收數據
+                            continue;
+                        }
+                        else
+                        {
+                            printf("Error Receiving ENC(dense_sum2): %s\n", strerror(errno));
+                            close(clientSocket);
+                            exit(1);
+                        }
 				}
 				enc_dense_sum2[k] = atof(indata);
 				data_size--;

@@ -108,9 +108,11 @@ int main()
     struct sockaddr_in my_addr, client_addr;
     int status;
     char indata[64] = {0}, outdata[64] = {0};
+    bool data_is_correct = true;
     int on = 1;
     int data_size = 0;
     int k = 0;
+    double total = 0;
 
     // create a socket
     sock_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -150,7 +152,7 @@ int main()
 
     addrlen = sizeof(client_addr);
 
-   while(1) 
+   while(data_is_correct)
 	{
         new_fd = accept(sock_fd, (struct sockaddr *)&client_addr, &addrlen);
         printf("connected by %s:%d\n", inet_ntoa(client_addr.sin_addr),
@@ -431,7 +433,7 @@ int main()
                 } while (data_size > 0);
                 /* ********** TEST PASS ********** */
                 
-                double total = 0;
+                total = 0;
                 for (int i = 0; i < 10; i++)
                 {
                     total += enc_dense_softmax[i];
@@ -441,9 +443,19 @@ int main()
                 cout << "total: " << total;
                 cout << endl;
 
+                if (total > 1.1)
+                {
+                    data_is_correct = false;
+                    break;
+                }
                /* Clear outdata for the next message */
                 memset(indata, 0, sizeof(indata));
                 memset(outdata, 0, sizeof(outdata));
+            }
+            if (total > 1)
+            {
+                data_is_correct = false;
+                break;
             }
         }
         cout << "wait for connection..." << endl;

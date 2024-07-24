@@ -17,6 +17,7 @@
         "cmath": "cpp",
         "iomanip": "cpp",
         "functional": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "cerrno": "cpp"
     }
 }
