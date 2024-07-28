@@ -390,6 +390,19 @@ int main()
 				memset(outdata, 0, sizeof(outdata));
 			}while(data_size > 0);
 			/* ********** TEST PASS ********** */
+
+			/* Sending ENC(vector_y)*/
+			data_size = 10;
+			k = 0;
+			do
+			{
+				sprintf(outdata, "%d", vector_y[k]);
+				send(clientSocket, outdata, sizeof(outdata), 0);
+				data_size--;
+				k++;
+				memset(outdata, 0, sizeof(outdata));
+			}while(data_size > 0);
+			/* ********** TEST PASS ********** */
 			
 			/* Receiving ENC(conv_layer) */
 			data_size = 8 * 28 * 28;
@@ -561,35 +574,53 @@ int main()
 
 				/* Softmax(dense_sum2) */
 				enc_dense_softmax[i] = exp(enc_dense_sum2[i]) / den;
-				if (enc_dense_softmax[i] < 0.0001)
-				{
-					enc_dense_softmax[i] = 0;
-				}
 				/* ENC(dense_softmax) */
 
-			}
-
-			for (int i = 0; i < 10; i++)
-			{
-				cout << enc_dense_softmax[i] << endl;
 			}
 
 			/* Sending ENC(dense_softmax) */
 			data_size = 10;
 			k = 0;
-			double loss = 0;
 			do
 			{
 				sprintf(outdata, "%f", enc_dense_softmax[k]);
 				send(clientSocket, outdata, sizeof(outdata), 0);
-				loss += enc_dense_softmax[k];
 				data_size--;
 				k++;
 				memset(outdata, 0, sizeof(outdata));
 			}while(data_size > 0);
 			/* ********** TEST PASS ********** */
-			
+
+			double enc_delta3[120];
+			data_size = 120;
+			k = 0;
+			do
+			{
+				int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
+				if (nbytes <= 0) 
+				{
+					close(clientSocket);
+					printf("client closed connection.\n");
+					break;
+				}
+				enc_delta3[k] = atof(indata);
+				data_size--;
+				k++;
+				memset(indata, 0, sizeof(indata));
+			} while (data_size > 0);
+
+			for (int i = 0; i < 120; i++)
+			{
+				cout << "enc_delta3[" << i << "]: " << enc_delta3[i] << endl;
+				if (enc_delta3[i] > 2 || enc_delta3[i] < -2)
+				{
+					cout << "wrong data at delta3." << endl;
+					close(clientSocket);
+					exit(1);
+				}
+			}
 			cout << endl;
+			
 			
 			/* Clear outdata for the next message */
 			memset(indata, 0, sizeof(indata));

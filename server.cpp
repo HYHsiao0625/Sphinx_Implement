@@ -209,6 +209,33 @@ int main()
                 }while(data_size > 0);
                 /* ********** TEST PASS ********** */
 
+                /* Receiving ENC(vector_y) */
+                data_size = 10;
+                k = 0;
+                do
+                {
+                    int nbytes = recv(new_fd, indata, sizeof(indata), 0);
+                    if (nbytes <= 0) 
+                    {
+                        if (errno == EAGAIN || errno == EWOULDBLOCK) 
+                        {
+                            // 稍後再嘗試接收數據
+                            continue;
+                        }
+                        else
+                        {
+                            printf("Error Receiving ENC(img): %s\n", strerror(errno));
+                            close(new_fd);
+                            exit(1);
+                        }
+                    }
+                    enc_vector_y[k] = atoi(indata);
+                    data_size--;
+                    k++;
+                    memset(indata, 0, sizeof(indata));
+                }while(data_size > 0);
+                /* ********** TEST PASS ********** */
+
                 /* Convolution Operation (enc_img, enc_conv_layer) */
                 for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
                 {
@@ -437,7 +464,6 @@ int main()
                 for (int i = 0; i < 10; i++)
                 {
                     total += enc_dense_softmax[i];
-                    cout << enc_dense_softmax[i] << endl;
                 }
 
                 cout << "total: " << total;
@@ -448,11 +474,57 @@ int main()
                     data_is_correct = false;
                     break;
                 }
+
+                /* Delta4 */
+                double enc_delta4[10];
+                for (int i = 0; i < 10; i++) 
+                {
+                    enc_delta4[i] = enc_dense_softmax[i] - enc_vector_y[i]; // Derivative of Softmax + Cross entropy
+                    enc_db2[i] = enc_delta4[i]; // Bias Changes
+                }
+
+                for (int i = 0; i < 120; i++) 
+                {
+                    for (int j = 0; j < 10; j++) 
+                    {
+                        enc_dw2[i][j] = enc_dense_sigmoid[i] * enc_delta4[j];
+                    }
+                }
+
+                /* Delta 3 */
+
+                double enc_delta3[120];
+                for (int i = 0; i < 120; i++) 
+                {
+                    enc_delta3[i] = 0;
+                    for (int j = 0; j < 10; j++) 
+                    {
+                        enc_delta3[i] += enc_dense_w2[i][j] * enc_delta4[j];
+                    }
+                    //enc_delta3[i] *= d_sigmoid(dense_sum[i]);
+                }
+
+                data_size = 120;
+                k = 0;
+                do
+                {
+                    sprintf(outdata, "%f", enc_delta3[k]);
+                    send(new_fd, outdata, sizeof(outdata), 0);
+                    data_size--;
+                    k++;
+                    memset(outdata, 0, sizeof(outdata));
+                } while (data_size > 0);
+
+                for (int i = 0; i < 120; i++)
+                {
+                    cout << "enc_delta3[" << i << "]: " << enc_delta3[i] << endl;
+                }
+
                /* Clear outdata for the next message */
                 memset(indata, 0, sizeof(indata));
                 memset(outdata, 0, sizeof(outdata));
             }
-            if (total > 1)
+            if (total > 1.1)
             {
                 data_is_correct = false;
                 break;
