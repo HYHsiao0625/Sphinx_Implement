@@ -23,7 +23,7 @@ int port = 7000;
 
 const int filter_size = 5;
 const double eta = 0.01;
-const int batch_size = 20;
+const int batch_size = 100;
 
 /* ************************************************************ */
 /* MNIST Data */
@@ -65,6 +65,8 @@ vector<vector<double>> dense_w(1568, vector<double>(120, 0));
 vector<double> dense_b(120, 0);
 vector<double> dense_sum(120, 0);
 vector<double> dense_sigmoid(120, 0);
+
+
 vector<vector<double>> dense_w2(120, vector<double>(10, 0));
 vector<double> dense_b2(10, 0);
 vector<double> dense_sum2(10, 0);
@@ -99,6 +101,105 @@ double softmax_den(vector<double> x, int len)
 	return val;
 }
 
+void write_weight_bais()
+{
+	ofstream conv_w_txt;
+	ofstream conv_b_txt;
+	ofstream dense_w_txt;
+	ofstream dense_b_txt;
+	ofstream dense_w2_txt;
+	ofstream dense_b2_txt;
+	conv_w_txt.open("conv_w.txt");
+	if (!conv_w_txt.is_open()) 
+	{
+        cout << "Failed to open file conv_w.\n";
+    }
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 5; i++) 
+		{
+			for (int j = 0; j < 5; j++) 
+			{
+				conv_w_txt << conv_w[filter_dim][i][j] << " ";
+			}
+			conv_w_txt << "\n";
+		}
+		conv_w_txt << "\n";
+	}
+	conv_w_txt.close();
+
+	conv_b_txt.open("conv_b.txt");
+	if (!conv_b_txt.is_open()) 
+	{
+        cout << "Failed to open file conv_b.\n";
+    }
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 28; i++) 
+		{
+			for (int j = 0; j < 28; j++) 
+			{
+				conv_b_txt << conv_b[filter_dim][i][j] << " ";
+			}
+			conv_b_txt << "\n";
+		}
+		conv_b_txt << "\n";
+	}
+	conv_b_txt.close();
+
+	dense_w_txt.open("dense_w.txt");
+	if (!dense_w_txt.is_open()) 
+	{
+        cout << "Failed to open file dense_w.\n";
+    }
+	for (int i = 0; i < 1568; i++) 
+	{
+		for (int j = 0; j < 120; j++) 
+		{
+			dense_w_txt << dense_w[i][j] << " ";
+		}
+		dense_w_txt << "\n\n";
+	}
+	dense_w_txt.close();
+
+	dense_b_txt.open("dense_b.txt");
+	if (!dense_b_txt.is_open()) 
+	{
+        cout << "Failed to open file dense_b.\n";
+    }
+	for (int i = 0; i < 120; i++) 
+	{
+		dense_b_txt << dense_b[i] << "\n";
+	}
+	dense_b_txt.close();
+
+	dense_w2_txt.open("dense_w2.txt");
+	if (!dense_w2_txt.is_open()) 
+	{
+        cout << "Failed to open file dense_w2.\n";
+    }
+	for (int i = 0; i < 120; i++) 
+	{
+		for (int j = 0; j < 10; j++) 
+		{
+			dense_w2_txt << dense_w2[i][j] << " ";
+		}
+		dense_w2_txt << "\n\n";
+	}
+	dense_w2_txt.close();
+
+	dense_b2_txt.open("dense_b2.txt");
+	if (!dense_b2_txt.is_open()) 
+	{
+        cout << "Failed to open file dense_b2.\n";
+    }
+	for (int i = 0; i < 10; i++) 
+	{
+		dense_b2_txt << dense_b2[i] << "\n";
+	}
+	dense_b2_txt.close();
+}
+
 /* ************************************************************ */
 
 void forward_pass(vector<vector<int>> img) 
@@ -111,17 +212,16 @@ void forward_pass(vector<vector<int>> img)
 			for (int j = 0; j < 28; j++) 
 			{
 				max_pooling[filter_dim][i][j] = 0;
-
 				conv_layer[filter_dim][i][j] = 0;
 				sig_layer[filter_dim][i][j] = 0;
 				for (int k = 0; k < filter_size; k++) 
 				{
 					for (int l = 0; l < filter_size; l++) 
 					{
-						conv_layer[filter_dim][i][j] = img[i + k][j + l] * enc_conv_w[filter_dim][k][l];
+						conv_layer[filter_dim][i][j] = img[i + k][j + l] * conv_w[filter_dim][k][l];
 					}
 				}
-				sig_layer[filter_dim][i][j] = sigmoid(conv_layer[filter_dim][i][j] + enc_conv_b[filter_dim][i][j]);
+				sig_layer[filter_dim][i][j] = sigmoid(conv_layer[filter_dim][i][j] + conv_b[filter_dim][i][j]);
 			}
 		}
 	}
@@ -175,9 +275,9 @@ void forward_pass(vector<vector<int>> img)
 		dense_sigmoid[i] = 0;
 		for (int j = 0; j < 1568; j++) 
 		{
-			dense_sum[i] += enc_dense_w[j][i] * dense_input[j];
+			dense_sum[i] += dense_w[j][i] * dense_input[j];
 		}
-		dense_sum[i] += enc_dense_b[i];
+		dense_sum[i] += dense_b[i];
 		dense_sigmoid[i] = sigmoid(dense_sum[i]);
 	}
 
@@ -187,9 +287,9 @@ void forward_pass(vector<vector<int>> img)
 		dense_sum2[i] = 0;
 		for (int j = 0; j < 120; j++) 
 		{
-			dense_sum2[i] += enc_dense_w2[j][i] * dense_sigmoid[j];
+			dense_sum2[i] += dense_w2[j][i] * dense_sigmoid[j];
 		}
-		dense_sum2[i] += enc_dense_b2[i];
+		dense_sum2[i] += dense_b2[i];
 	}
 
 	// Softmax Output
@@ -591,6 +691,7 @@ int main()
 			}while(data_size > 0);
 			/* ********** TEST PASS ********** */
 
+			/* Sending ENC(delta3) */
 			double enc_delta3[120];
 			data_size = 120;
 			k = 0;
@@ -608,24 +709,214 @@ int main()
 				k++;
 				memset(indata, 0, sizeof(indata));
 			} while (data_size > 0);
-
+			
 			for (int i = 0; i < 120; i++)
 			{
-				cout << "enc_delta3[" << i << "]: " << enc_delta3[i] << endl;
-				if (enc_delta3[i] > 2 || enc_delta3[i] < -2)
-				{
-					cout << "wrong data at delta3." << endl;
-					close(clientSocket);
-					exit(1);
-				}
+				/* DEC(enc_delta3) */
+
+				/* Multiply by D_Sigmoid(dense_sum2) */
+				enc_delta3[i] *= d_sigmoid(enc_dense_sum[i]);
+				/* ENC(delta3) */
+				
 			}
-			cout << endl;
-			
-			
+
+			/* Sending ENC(delta3) */
+			data_size = 120;
+			k = 0;
+			do
+			{
+				sprintf(outdata, "%f", enc_delta3[k]);
+				send(clientSocket, outdata, sizeof(outdata), 0);
+				data_size--;
+				k++;
+				memset(outdata, 0, sizeof(outdata));
+			} while (data_size > 0);
+
+			/* Receiving ENC(enc_delta2) */
+			double enc_delta2[1568];
+			data_size = 1568;
+			k = 0;
+			do
+			{
+				int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
+				if (nbytes <= 0) 
+				{
+					close(clientSocket);
+					printf("client closed connection.\n");
+					break;
+				}
+				enc_delta2[k] = atof(indata);
+				data_size--;
+				k++;
+				memset(indata, 0, sizeof(indata));
+			} while (data_size > 0);
+
+			for (int i = 0; i < 1568; i++)
+			{
+				/* DEC(enc_delta2) */
+
+				/* Multiply by D_Sigmoid(dense_sum2) */
+				enc_delta2[i] *= d_sigmoid(enc_dense_input[i]);
+				/* ENC(delta2) */
+				
+			}
+
+			data_size = 1568;
+			k = 0;
+			do
+			{
+				sprintf(outdata, "%f", enc_delta2[k]);
+				send(clientSocket, outdata, sizeof(outdata), 0);
+				data_size--;
+				k++;
+				memset(outdata, 0, sizeof(outdata));
+			} while (data_size > 0);
 			/* Clear outdata for the next message */
 			memset(indata, 0, sizeof(indata));
 			memset(outdata, 0, sizeof(outdata));
 		}
+	}
+	cout << "Training over."<< endl;
+	cout << "Receive Weight..."<< endl;
+
+	data_size = 8 * 5 * 5;
+	k = 0;
+	do
+	{
+		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
+		if (nbytes <= 0) 
+		{
+			close(clientSocket);
+			printf("client closed connection.\n");
+			break;
+		}
+		conv_w[k / 25][(k / 5) % 5][k % 5] = atof(indata);
+		//cout << "\r" << enc_conv_w[k / 25][(k / 5) % 5][k % 5] << flush; 
+		data_size--;
+		k++;
+		memset(indata, 0, sizeof(indata));
+	} while (data_size > 0);
+	
+	data_size = 8 * 28 * 28;
+	k = 0;
+	do
+	{
+		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
+		if (nbytes <= 0) 
+		{
+			close(clientSocket);
+			printf("client closed connection.\n");
+			break;
+		}
+		conv_b[k / 784][(k / 28) % 28][k % 28] = atof(indata);
+		data_size--;
+		k++;
+		memset(indata, 0, sizeof(indata));
+	} while (data_size > 0);
+	
+	// Dense Layer Weight
+
+	data_size = 1568 * 120;
+	k = 0;
+	do
+	{
+		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
+		if (nbytes <= 0) 
+		{
+			close(clientSocket);
+			printf("client closed connection.\n");
+			break;
+		}
+		dense_w[k / 120][k % 120] = atof(indata);
+		data_size--;
+		k++;
+		memset(indata, 0, sizeof(indata));
+	} while (data_size > 0);
+	
+	data_size = 120;
+	k = 0;
+	do
+	{
+		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
+		if (nbytes <= 0) 
+		{
+			close(clientSocket);
+			printf("client closed connection.\n");
+			break;
+		}
+		dense_b[k] = atof(indata);
+		data_size--;
+		k++;
+		memset(indata, 0, sizeof(indata));
+	} while (data_size > 0);
+	
+	data_size = 120 * 10;
+	k = 0;
+	do
+	{
+		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
+		if (nbytes <= 0) 
+		{
+			close(clientSocket);
+			printf("client closed connection.\n");
+			break;
+		}
+		dense_w2[k / 10][k % 10] = atof(indata);
+		data_size--;
+		k++;
+		memset(indata, 0, sizeof(indata));
+	} while (data_size > 0);
+	
+	data_size = 10;
+	k = 0;
+	do
+	{
+		int nbytes = recv(clientSocket, indata, sizeof(indata), 0);
+		if (nbytes <= 0) 
+		{
+			close(clientSocket);
+			printf("client closed connection.\n");
+			break;
+		}
+		dense_b2[k] = atof(indata);
+		data_size--;
+		k++;
+		memset(indata, 0, sizeof(indata));
+	} while (data_size > 0);
+	write_weight_bais();
+
+	int val_len = 600;
+	int cor = 0;
+	int confusion_mat[10][10];
+	for(int i = 0; i < 10; i++)
+	{
+		for(int j = 0; j < 10; j++)
+		{
+			confusion_mat[i][j] = 0;
+		}
+	}
+	cout << "Start Testing." << endl;
+	for (int i = 0; i < val_len; i++) 
+	{
+		vector<vector<int>> img(32, vector<int>(32, 0));
+		give_img(data_test[i], img);
+		forward_pass(img);
+		int pre = give_prediction();
+		confusion_mat[label_test[i]][pre]++;
+		if (pre == label_test[i]) cor++;
+	}
+	float accu = double(cor) / val_len;
+	cout << "Accuracy: " << accu << endl;
+
+	cout << "   0 1 2 3 4 5 6 7 8 9" << endl;
+	for (int i = 0; i < 10; i++) 
+	{
+		cout << i << ": ";
+		for (int j = 0; j < 10; j++) 
+		{
+			cout << confusion_mat[i][j] << " ";
+		}
+		cout << endl;
 	}
 	return 0; 
 }
