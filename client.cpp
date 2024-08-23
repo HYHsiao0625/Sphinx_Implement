@@ -23,7 +23,7 @@ int port = 7000;
 
 const int filter_size = 5;
 const double eta = 0.01;
-const int batch_size = 100;
+const int batch_size = 10;
 
 /* ************************************************************ */
 /* MNIST Data */
@@ -406,13 +406,13 @@ void give_y(int y, vector<int>& vector_y)
 
 int give_prediction() 
 {
-	double max_val = enc_dense_softmax[0];
+	double max_val = dense_softmax[0];
 	int max_pos = 0;
 	for (int i = 1; i < 10; i++) 
 	{
-		if (enc_dense_softmax[i] > max_val)
+		if (dense_softmax[i] > max_val)
 		{
-			max_val = enc_dense_softmax[i];
+			max_val = dense_softmax[i];
 			max_pos = i;
 		}
 	}
@@ -902,6 +902,7 @@ int main()
 		give_img(data_test[i], img);
 		forward_pass(img);
 		int pre = give_prediction();
+		cout << pre << endl;
 		confusion_mat[label_test[i]][pre]++;
 		if (pre == label_test[i]) cor++;
 	}

@@ -23,7 +23,7 @@ int port = 7000;
 /* Training Parameter */
 const int filter_size = 5;
 const double eta = 0.01;
-const int batch_size = 100;
+const int batch_size = 10;
 
 /* ************************************************************ */
 /* Encryption Weight */

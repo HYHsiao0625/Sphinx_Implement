@@ -12,7 +12,7 @@ using namespace std::chrono;
 
 const int filter_size = 5;
 const double eta = 0.01;
-const int batch_size = 200;
+const int batch_size = 1;
 
 vector<vector<int>> data_train(60000, vector<int>(784, 0));
 vector<vector<int>> data_test(10000, vector<int>(784, 0));
@@ -137,19 +137,6 @@ void forward_pass(vector<vector<int>> img)
 		}
 	}
 	
-	for (int i = 0; i < 8; i++)
-        {
-            for (int j = 0; j < 28; j++)
-            {
-                for (int k = 0; k < 28; k++)
-                {
-                    cout << setprecision(4) << conv_layer[i][j][k] << " ";
-                }
-                cout << endl;
-            }
-            cout << endl;
-        }
-        cout << endl;
 	// MAX Pooling (max_pooling, max_layer)
 	double cur_max = 0;
 	int max_i = 0, max_j = 0;
