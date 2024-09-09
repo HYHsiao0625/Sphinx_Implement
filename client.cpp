@@ -23,7 +23,7 @@ int port = 7000;
 
 const int filter_size = 5;
 const double eta = 0.01;
-const int batch_size = 10;
+const int batch_size = 100;
 
 /* ************************************************************ */
 /* MNIST Data */
@@ -427,7 +427,7 @@ int main()
 	int clientSocket;
     struct sockaddr_in serverAddress;
     int status;
-    char indata[64] = {0}, outdata[64] = {0};
+    char indata[32] = {0}, outdata[32] = {0};
 	int epochs;
 	int data_size = 0;
 	int k = 0;
@@ -469,7 +469,7 @@ int main()
 	{
 		for (int j = 0; j < batch_size; j++)
 		{
-			cout << "Epoch: " << i << " --------- " << setw(3) << j << " / " << batch_size << "." << endl;
+			cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " |" << flush;
 			vector<vector<int>> img(32, vector<int>(32, 0));
 			vector<int> vector_y(10, 0);
 			int num = rand() % 60000;
@@ -776,7 +776,7 @@ int main()
 			memset(outdata, 0, sizeof(outdata));
 		}
 	}
-	cout << "Training over."<< endl;
+	cout << "\nTraining over."<< endl;
 	cout << "Receive Weight..."<< endl;
 
 	data_size = 8 * 5 * 5;
@@ -902,7 +902,6 @@ int main()
 		give_img(data_test[i], img);
 		forward_pass(img);
 		int pre = give_prediction();
-		cout << pre << endl;
 		confusion_mat[label_test[i]][pre]++;
 		if (pre == label_test[i]) cor++;
 	}

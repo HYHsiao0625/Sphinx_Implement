@@ -23,7 +23,7 @@ int port = 7000;
 /* Training Parameter */
 const int filter_size = 5;
 const double eta = 0.01;
-const int batch_size = 10;
+const int batch_size = 100;
 
 /* ************************************************************ */
 /* Encryption Weight */
@@ -205,12 +205,13 @@ int main()
     socklen_t addrlen;
     struct sockaddr_in my_addr, client_addr;
     int status;
-    char indata[64] = {0}, outdata[64] = {0};
+    char indata[32] = {0}, outdata[32] = {0};
     bool data_is_correct = true;
     int on = 1;
     int data_size = 0;
     int k = 0;
     double total = 0;
+    double loss = 0;
 
     // create a socket
     sock_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -277,7 +278,7 @@ int main()
         {
             for (int j = 0; j < batch_size; j++) 
             {
-                cout << "Epoch: " << i << " --------- " << setw(3) << j << " / " << batch_size << "." << endl;
+                cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " | LOSS: " << fixed << loss << " |" << flush;
                 vector<vector<int>> enc_img(32, vector<int>(32, 0));
                 vector<int> enc_vector_y(10, 0);
                 /* ************************************************************ */
@@ -565,20 +566,19 @@ int main()
                     total += enc_dense_softmax[i];
                 }
 
-                cout << "total: " << total;
-                cout << endl;
-
-                if (total > 1.1)
+                if (total > 1.0001)
                 {
                     data_is_correct = false;
                     break;
                 }
-
+                
                 /* Delta4 */
+                loss = 0;
                 double enc_delta4[10];
                 for (int i = 0; i < 10; i++) 
                 {
                     enc_delta4[i] = enc_dense_softmax[i] - enc_vector_y[i]; // Derivative of Softmax + Cross entropy
+                    loss += abs(enc_delta4[i]);
                     enc_db2[i] = enc_delta4[i]; // Bias Changes
                 }
 
@@ -786,6 +786,16 @@ int main()
                         }
                     }
                 }
+                if (total > 1.0001)
+                {
+                    data_is_correct = false;
+                    break;
+                }
+            }
+            if (total > 1.0001)
+            {
+                data_is_correct = false;
+                break;
             }
             memset(indata, 0, sizeof(indata));
 			memset(outdata, 0, sizeof(outdata));
@@ -797,7 +807,7 @@ int main()
         int elapsedSeconds_ = static_cast<int>(elapsedSeconds) % 60;
         int elapsedMilliseconds = static_cast<int>(elapsedSeconds * 1000) % 1000;
         cout << fixed << setprecision(10);
-        cout << "Training time : " << elapsedMinutes << "m " << elapsedSeconds_ << "s " << elapsedMilliseconds << "ms";
+        cout << "\nTraining time : " << elapsedMinutes << "m " << elapsedSeconds_ << "s " << elapsedMilliseconds << "ms";
         cout << endl;
         cout << "Training over."<< endl;
         cout << "Send Weight to Client..." << endl;
