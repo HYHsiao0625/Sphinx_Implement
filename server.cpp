@@ -22,7 +22,7 @@ int port = 7000;
 /* ************************************************************ */
 /* Training Parameter */
 const int filter_size = 5;
-const double eta = 0.01;
+const double eta = 0.001;
 const int batch_size = 100;
 
 /* ************************************************************ */
@@ -212,7 +212,7 @@ int main()
     int k = 0;
     double total = 0;
     double loss = 0;
-
+    srand(time(NULL));
     // create a socket
     sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_fd == -1) 
@@ -273,14 +273,16 @@ int main()
         write_weight_bais();
         cout << "Start Training." << endl;
         auto startTime = chrono::high_resolution_clock::now();
-
+        vector<vector<double>> enc_img(32, vector<double>(32, 0));
+        vector<int> enc_vector_y(10, 0);
         for (int i = 0; i < epoch; i++) 
         {
             for (int j = 0; j < batch_size; j++) 
             {
-                cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " | LOSS: " << fixed << loss << " |" << flush;
-                vector<vector<int>> enc_img(32, vector<int>(32, 0));
-                vector<int> enc_vector_y(10, 0);
+                cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " | Loss: " << fixed << loss << " | Label: " 
+                << enc_vector_y[0] << enc_vector_y[1] << enc_vector_y[2]
+                << enc_vector_y[3] << enc_vector_y[4] << enc_vector_y[5]
+                << enc_vector_y[6] << enc_vector_y[7] << enc_vector_y[8] << enc_vector_y[9] << " |" << flush;
                 /* ************************************************************ */
                 /* Receiving ENC(img) */
                 data_size = 32 * 32;
@@ -302,7 +304,7 @@ int main()
                             exit(1);
                         }
                     }
-                    enc_img[k / 32][k % 32] = atoi(indata);
+                    enc_img[k / 32][k % 32] = atof(indata);
                     data_size--;
                     k++;
                     memset(indata, 0, sizeof(indata));

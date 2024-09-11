@@ -22,7 +22,7 @@ const char* host = "0.0.0.0";
 int port = 7000;
 
 const int filter_size = 5;
-const double eta = 0.01;
+const double eta = 0.001;
 const int batch_size = 100;
 
 /* ************************************************************ */
@@ -202,7 +202,7 @@ void write_weight_bais()
 
 /* ************************************************************ */
 
-void forward_pass(vector<vector<int>> img) 
+void forward_pass(vector<vector<double>> img) 
 {
 	// Convolution Operation + Sigmoid Activation
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
@@ -378,7 +378,7 @@ void read_test_data()
 	}
 }
 
-void give_img(vector<int> vec, vector<vector<int>>& img) 
+void give_img(vector<int> vec, vector<vector<double>>& img) 
 {
 	int k = 0;
 	for (int i = 0; i < 32; i++) 
@@ -470,7 +470,7 @@ int main()
 		for (int j = 0; j < batch_size; j++)
 		{
 			cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " |" << flush;
-			vector<vector<int>> img(32, vector<int>(32, 0));
+			vector<vector<double>> img(32, vector<double>(32, 0));
 			vector<int> vector_y(10, 0);
 			int num = rand() % 60000;
 			give_y(label_train[num], vector_y);
@@ -483,7 +483,7 @@ int main()
 			k = 0;
 			do
 			{
-				sprintf(outdata, "%d", img[k / 32][k % 32]);
+				sprintf(outdata, "%f", img[k / 32][k % 32] / 255);
 				send(clientSocket, outdata, sizeof(outdata), 0);
 				data_size--;
 				k++;
@@ -898,7 +898,7 @@ int main()
 	cout << "Start Testing." << endl;
 	for (int i = 0; i < val_len; i++) 
 	{
-		vector<vector<int>> img(32, vector<int>(32, 0));
+		vector<vector<double>> img(32, vector<double>(32, 0));
 		give_img(data_test[i], img);
 		forward_pass(img);
 		int pre = give_prediction();
