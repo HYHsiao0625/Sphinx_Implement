@@ -12,7 +12,7 @@ using namespace std::chrono;
 
 const int filter_size = 5;
 const double eta = 0.01;
-const int batch_size = 200;
+const int batch_size = 1;
 
 vector<vector<int>> data_train(60000, vector<int>(784, 0));
 vector<vector<int>> data_test(10000, vector<int>(784, 0));
@@ -61,11 +61,10 @@ double d_sigmoid(double x)
 double softmax_den(vector<double> x, int len) 
 {
 	double val = 0;
-	for (int i = 0; i < len; i++) 
+	for (int i = 0; i < len; i++)
 	{
 		val += exp(x[i]);
 	}
-	cout << val << endl;
 	return val;
 }
 
@@ -124,7 +123,6 @@ void forward_pass(vector<vector<int>> img)
 			for (int j = 0; j < 28; j++) 
 			{
 				max_pooling[filter_dim][i][j] = 0;
-
 				conv_layer[filter_dim][i][j] = 0;
 				sig_layer[filter_dim][i][j] = 0;
 				for (int k = 0; k < filter_size; k++) 

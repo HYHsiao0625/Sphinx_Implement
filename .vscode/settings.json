@@ -15,6 +15,9 @@
         "initializer_list": "cpp",
         "utility": "cpp",
         "cmath": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "functional": "cpp",
+        "random": "cpp",
+        "cerrno": "cpp"
     }
 }

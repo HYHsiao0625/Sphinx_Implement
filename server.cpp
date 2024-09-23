@@ -22,7 +22,7 @@ int port = 7000;
 /* ************************************************************ */
 /* Training Parameter */
 const int filter_size = 5;
-const double eta = 0.01;
+const double eta = 0.001;
 const int batch_size = 100;
 
 /* ************************************************************ */
@@ -55,17 +55,164 @@ vector<vector<vector<double>>> enc_db_conv(8, vector<vector<double>>(28, vector<
 
 /* ************************************************************ */
 
+void initialise_weights() 
+{
+	for (int i = 0; i < 8; i++) 
+	{
+		for (int j = 0; j < 28; j++) 
+		{
+			for (int k = 0; k < 28; k++) 
+			{
+				if (j < 5 && k < 5) 
+				{
+					enc_conv_w[i][j][k] = 2 * double(rand()) / RAND_MAX - 1; // Random double value between -1 and 1
+				}
+				enc_conv_b[i][j][k] = 2 * double(rand()) / RAND_MAX - 1; // Random double value between -1 and 1
+			}
+		}
+	}
+
+	for (int i = 0; i < 1568; i++) 
+	{
+		for (int j = 0; j < 120; j++) 
+		{
+			enc_dense_w[i][j] = 2 * double(rand()) / RAND_MAX - 1;
+		}
+	}
+
+	for (int i = 0; i < 120; i++) 
+	{
+		enc_dense_b[i] = 2 * double(rand()) / RAND_MAX - 1;
+	}
+
+	for (int i = 0; i < 120; i++) 
+	{
+		for (int j = 0; j < 10; j++) 
+		{
+			enc_dense_w2[i][j] = 2 * double(rand()) / RAND_MAX - 1;
+		}
+	}
+
+	for (int i = 0; i < 10; i++) 
+	{
+		enc_dense_b2[i] = 2 * double(rand()) / RAND_MAX - 1;
+	}
+}
+
+void write_weight_bais()
+{
+	ofstream conv_w_txt;
+	ofstream conv_b_txt;
+	ofstream dense_w_txt;
+	ofstream dense_b_txt;
+	ofstream dense_w2_txt;
+	ofstream dense_b2_txt;
+	conv_w_txt.open("init_conv_w.txt");
+	if (!conv_w_txt.is_open()) 
+	{
+        cout << "Failed to open file conv_w.\n";
+    }
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 5; i++) 
+		{
+			for (int j = 0; j < 5; j++) 
+			{
+				conv_w_txt << enc_conv_w[filter_dim][i][j] << " ";
+			}
+			conv_w_txt << "\n";
+		}
+		conv_w_txt << "\n";
+	}
+	conv_w_txt.close();
+
+	conv_b_txt.open("init_conv_b.txt");
+	if (!conv_b_txt.is_open()) 
+	{
+        cout << "Failed to open file conv_b.\n";
+    }
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 28; i++) 
+		{
+			for (int j = 0; j < 28; j++) 
+			{
+				conv_b_txt << enc_conv_b[filter_dim][i][j] << " ";
+			}
+			conv_b_txt << "\n";
+		}
+		conv_b_txt << "\n";
+	}
+	conv_b_txt.close();
+
+	dense_w_txt.open("init_dense_w.txt");
+	if (!dense_w_txt.is_open()) 
+	{
+        cout << "Failed to open file dense_w.\n";
+    }
+	for (int i = 0; i < 1568; i++) 
+	{
+		for (int j = 0; j < 120; j++) 
+		{
+			dense_w_txt << enc_dense_w[i][j] << " ";
+		}
+		dense_w_txt << "\n\n";
+	}
+	dense_w_txt.close();
+
+	dense_b_txt.open("init_dense_b.txt");
+	if (!dense_b_txt.is_open()) 
+	{
+        cout << "Failed to open file dense_b.\n";
+    }
+	for (int i = 0; i < 120; i++) 
+	{
+		dense_b_txt << enc_dense_b[i] << "\n";
+	}
+	dense_b_txt.close();
+
+	dense_w2_txt.open("init_dense_w2.txt");
+	if (!dense_w2_txt.is_open()) 
+	{
+        cout << "Failed to open file dense_w2.\n";
+    }
+	for (int i = 0; i < 120; i++) 
+	{
+		for (int j = 0; j < 10; j++) 
+		{
+			dense_w2_txt << enc_dense_w2[i][j] << " ";
+		}
+		dense_w2_txt << "\n\n";
+	}
+	dense_w2_txt.close();
+
+	dense_b2_txt.open("init_dense_b2.txt");
+	if (!dense_b2_txt.is_open()) 
+	{
+        cout << "Failed to open file dense_b2.\n";
+    }
+	for (int i = 0; i < 10; i++) 
+	{
+		dense_b2_txt << enc_dense_b2[i] << "\n";
+	}
+	dense_b2_txt.close();
+}
+/* ************************************************************ */
+
 int main()
 {
     int sock_fd, new_fd;
     socklen_t addrlen;
     struct sockaddr_in my_addr, client_addr;
     int status;
-    char indata[1024] = {0}, outdata[1024] = {0};
-	double in_data = 0;
-    double a = 0, b = 0;
+    char indata[32] = {0}, outdata[32] = {0};
+    bool data_is_correct = true;
     int on = 1;
-
+    int data_size = 0;
+    int k = 0;
+    double total = 0;
+    double loss = 0;
+    srand(time(NULL));
     // create a socket
     sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_fd == -1) 
@@ -104,7 +251,7 @@ int main()
 
     addrlen = sizeof(client_addr);
 
-    while (1) 
+   while(data_is_correct)
 	{
         new_fd = accept(sock_fd, (struct sockaddr *)&client_addr, &addrlen);
         printf("connected by %s:%d\n", inet_ntoa(client_addr.sin_addr),
@@ -121,125 +268,23 @@ int main()
         cout << "Train epochs is " << indata << endl;
         int epoch = atoi(indata);
         memset(indata, 0, sizeof(indata));
-
-        cout << "Receive Initialize Weight..." << endl;
-        // Convolution Layer Weight
-        int data_size = 8 * 5 * 5;
-        int k = 0;
-        do
-        {
-            int nbytes = recv(new_fd, indata, sizeof(indata), 0);
-            if (nbytes <= 0) 
-            {
-                close(new_fd);
-                printf("client closed connection.\n");
-                break;
-            }
-            enc_conv_w[k / 25][(k / 5) % 5][k % 5] = atof(indata);
-            data_size--;
-            k++;
-            memset(indata, 0, sizeof(indata));
-        } while (data_size > 0);
-        
-        data_size = 8 * 28 * 28;
-        k = 0;
-        do
-        {
-            int nbytes = recv(new_fd, indata, sizeof(indata), 0);
-            if (nbytes <= 0) 
-            {
-                close(new_fd);
-                printf("client closed connection.\n");
-                break;
-            }
-            enc_conv_b[k / 784][(k / 28) % 28][k % 28] = atof(indata);
-            data_size--;
-            k++;
-            memset(indata, 0, sizeof(indata));
-        } while (data_size > 0);
-        
-        // Dense Layer Weight
-
-        data_size = 1568 * 120;
-        k = 0;
-        do
-        {
-            int nbytes = recv(new_fd, indata, sizeof(indata), 0);
-            if (nbytes <= 0) 
-            {
-                close(new_fd);
-                printf("client closed connection.\n");
-                break;
-            }
-            enc_dense_w[(k / 120) % 1568][k % 120] = atof(indata);
-            data_size--;
-            k++;
-            memset(indata, 0, sizeof(indata));
-        } while (data_size > 0);
-        
-        data_size = 120;
-        k = 0;
-        do
-        {
-            int nbytes = recv(new_fd, indata, sizeof(indata), 0);
-            if (nbytes <= 0) 
-            {
-                close(new_fd);
-                printf("client closed connection.\n");
-                break;
-            }
-            enc_dense_b[k] = atof(indata);
-            data_size--;
-            k++;
-            memset(indata, 0, sizeof(indata));
-        } while (data_size > 0);
-        
-        data_size = 120 * 10;
-        k = 0;
-        do
-        {
-            int nbytes = recv(new_fd, indata, sizeof(indata), 0);
-            if (nbytes <= 0) 
-            {
-                close(new_fd);
-                printf("client closed connection.\n");
-                break;
-            }
-            enc_dense_w2[(k / 10) % 120][k % 10] = atof(indata);
-            data_size--;
-            k++;
-            memset(indata, 0, sizeof(indata));
-        } while (data_size > 0);
-        
-        data_size = 10;
-        k = 0;
-        do
-        {
-            int nbytes = recv(new_fd, indata, sizeof(indata), 0);
-            if (nbytes <= 0) 
-            {
-                close(new_fd);
-                printf("client closed connection.\n");
-                break;
-            }
-            enc_dense_b2[k] = atof(indata);
-            data_size--;
-            k++;
-            memset(indata, 0, sizeof(indata));
-        } while (data_size > 0);
-
+        cout << "Initialize Weight..." << endl;
+        initialise_weights();
+        write_weight_bais();
         cout << "Start Training." << endl;
         auto startTime = chrono::high_resolution_clock::now();
-
+        vector<vector<double>> enc_img(32, vector<double>(32, 0));
+        vector<int> enc_vector_y(10, 0);
         for (int i = 0; i < epoch; i++) 
         {
             for (int j = 0; j < batch_size; j++) 
             {
-                //cout << "\rEpoch: " << i << " --------- " << setw(3) << j << " / " << batch_size << " done." << flush;
-                vector<vector<int>> enc_img(32, vector<int>(32, 0));
-                vector<int> enc_vector_y(10, 0);
+                cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " | Loss: " << fixed << loss << " | Label: " 
+                << enc_vector_y[0] << enc_vector_y[1] << enc_vector_y[2]
+                << enc_vector_y[3] << enc_vector_y[4] << enc_vector_y[5]
+                << enc_vector_y[6] << enc_vector_y[7] << enc_vector_y[8] << enc_vector_y[9] << " |" << flush;
                 /* ************************************************************ */
-                /* Forward Pass */
+                /* Receiving ENC(img) */
                 data_size = 32 * 32;
                 k = 0;
                 do
@@ -247,41 +292,60 @@ int main()
                     int nbytes = recv(new_fd, indata, sizeof(indata), 0);
                     if (nbytes <= 0) 
                     {
-                        close(new_fd);
-                        printf("client closed connection.\n");
-                        break;
+                        if (errno == EAGAIN || errno == EWOULDBLOCK) 
+                        {
+                            // 稍後再嘗試接收數據
+                            continue;
+                        }
+                        else
+                        {
+                            printf("Error Receiving ENC(img): %s\n", strerror(errno));
+                            close(new_fd);
+                            exit(1);
+                        }
                     }
-                    enc_img[k / 32][k % 32] = atoi(indata);
+                    enc_img[k / 32][k % 32] = atof(indata);
                     data_size--;
                     k++;
                     memset(indata, 0, sizeof(indata));
-                } while (data_size > 0);
-                
+                }while(data_size > 0);
+                /* ********** TEST PASS ********** */
+
+                /* Receiving ENC(vector_y) */
                 data_size = 10;
                 k = 0;
                 do
                 {
-                    enc_vector_y[k] = 0;
                     int nbytes = recv(new_fd, indata, sizeof(indata), 0);
                     if (nbytes <= 0) 
                     {
-                        close(new_fd);
-                        printf("client closed connection.\n");
-                        break;
+                        if (errno == EAGAIN || errno == EWOULDBLOCK) 
+                        {
+                            // 稍後再嘗試接收數據
+                            continue;
+                        }
+                        else
+                        {
+                            printf("Error Receiving ENC(img): %s\n", strerror(errno));
+                            close(new_fd);
+                            exit(1);
+                        }
                     }
                     enc_vector_y[k] = atoi(indata);
                     data_size--;
                     k++;
                     memset(indata, 0, sizeof(indata));
-                } while (data_size > 0);
+                }while(data_size > 0);
+                /* ********** TEST PASS ********** */
 
-                // Convolution Operation
+                /* Convolution Operation (enc_img, enc_conv_layer) */
                 for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
                 {
                     for (int i = 0; i < 28; i++) 
                     {
                         for (int j = 0; j < 28; j++) 
                         {
+                            enc_conv_layer[filter_dim][i][j] = 0;
                             for (int k = 0; k < filter_size; k++) 
                             {
                                 for (int l = 0; l < filter_size; l++) 
@@ -293,7 +357,9 @@ int main()
                         }
                     }
                 }
-                
+                /* ********** TEST PASS ********** */
+
+                /* Sending ENC(conv_layer) */
                 data_size = 8 * 28 * 28;
                 k = 0;
                 do
@@ -303,8 +369,10 @@ int main()
                     data_size--;
                     k++;
                     memset(outdata, 0, sizeof(outdata));
-                } while (data_size > 0);
+                }while(data_size > 0);
+                /* ********** TEST PASS ********** */
 
+                /* Receiving ENC(sig_layer) */
                 data_size = 8 * 28 * 28;
                 k = 0;
                 do
@@ -312,17 +380,26 @@ int main()
                     int nbytes = recv(new_fd, indata, sizeof(indata), 0);
                     if (nbytes <= 0) 
                     {
-                        close(new_fd);
-                        printf("client closed connection.\n");
-                        break;
+                        if (errno == EAGAIN || errno == EWOULDBLOCK) 
+                        {
+                            // 稍後再嘗試接收數據
+                            continue;
+                        }
+                        else
+                        {
+                            printf("Error Receiving ENC(sig_layer): %s\n", strerror(errno));
+                            close(new_fd);
+                            exit(1);
+                        }
                     }
                     enc_sig_layer[k / 784][(k / 28) % 28][k % 28] = atof(indata);
                     data_size--;
                     k++;
                     memset(indata, 0, sizeof(indata));
-                } while (data_size > 0);
+                }while(data_size > 0);
+                /* ********** TEST PASS ********** */
 
-                // MAX Pooling (max_pooling, max_layer)
+                /* MAX Pooling (max_pooling, max_layer) */
                 double cur_max = 0;
                 int max_i = 0, max_j = 0;
                 for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
@@ -331,6 +408,7 @@ int main()
                     {
                         for (int j = 0; j < 28; j += 2) 
                         {
+                            enc_max_pooling[filter_dim][i][j] = 0;
                             max_i = i;
                             max_j = j;
                             cur_max = enc_sig_layer[filter_dim][i][j];
@@ -350,7 +428,9 @@ int main()
                         }
                     }
                 }
-                
+                /* ********** TEST PASS ********** */
+
+                /* Flat (enc_max_layer, enc_dense_input)*/
                 k = 0;
                 for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
                 {
@@ -363,7 +443,9 @@ int main()
                         }
                     }
                 }
+                /* ********** TEST PASS ********** */
                 
+                /* Sending ENC(dense_input) for Backward pass*/
                 data_size = 1568;
                 k = 0;
                 do
@@ -373,10 +455,14 @@ int main()
                     data_size--;
                     k++;
                     memset(outdata, 0, sizeof(outdata));
-                } while (data_size > 0);
+                }while(data_size > 0);
+                /* ********** TEST PASS ********** */
 
+                /* Dense Layer1 Computing*/
                 for (int i = 0; i < 120; i++) 
                 {
+                    enc_dense_sum[i] = 0;
+		            enc_dense_sigmoid[i] = 0;
                     for (int j = 0; j < 1568; j++) 
                     {
                         enc_dense_sum[i] += enc_dense_w[j][i] * enc_dense_input[j];
@@ -394,10 +480,10 @@ int main()
                     data_size--;
                     k++;
                     memset(outdata, 0, sizeof(outdata));
-                } while (data_size > 0);
-                
-                // Dense Layer 2
+                }while(data_size > 0);
+                /* ********** TEST PASS ********** */
 
+                /* Receiving ENC(dense_sigmoid) */
                 data_size = 120;
                 k = 0;
                 do
@@ -405,26 +491,38 @@ int main()
                     int nbytes = recv(new_fd, indata, sizeof(indata), 0);
                     if (nbytes <= 0) 
                     {
-                        close(new_fd);
-                        printf("client closed connection.\n");
-                        break;
+                        if (errno == EAGAIN || errno == EWOULDBLOCK) 
+                        {
+                            // 稍後再嘗試接收數據
+                            continue;
+                        }
+                        else
+                        {
+                            printf("Error Receiving ENC(dense_sigmoid): %s\n", strerror(errno));
+                            close(new_fd);
+                            exit(1);
+                        }
                     }
                     enc_dense_sigmoid[k] = atof(indata);
                     data_size--;
                     k++;
                     memset(indata, 0, sizeof(indata));
-                } while (data_size > 0);
-                
+                }while(data_size > 0);
+                /* ********** TEST PASS ********** */
+
+                /* Dense Layer2 Computing*/
                 for (int i = 0; i < 10; i++) 
                 {
+                    enc_dense_sum2[i] = 0;
                     for (int j = 0; j < 120; j++) 
                     {
-                        enc_dense_sum2[i] += enc_dense_w2[j][i] * enc_dense_input[j];
+                        enc_dense_sum2[i] += enc_dense_w2[j][i] * enc_dense_sigmoid[j];
                     }
                     enc_dense_sum2[i] += enc_dense_b2[i];
                     //dense_sigmoid[i] = sigmoid(dense_sum[i]);
                 }
 
+                /* Sending ENC(dense_sum2)*/
                 data_size = 10;
                 k = 0;
                 do
@@ -434,9 +532,10 @@ int main()
                     data_size--;
                     k++;
                     memset(outdata, 0, sizeof(outdata));
-                } while (data_size > 0);
+                }while(data_size > 0);
+                /* ********** TEST PASS ********** */
 
-                // Softmax Output
+                /* Receiving ENC(dense_softmax) */
                 data_size = 10;
                 k = 0;
                 do
@@ -444,25 +543,44 @@ int main()
                     int nbytes = recv(new_fd, indata, sizeof(indata), 0);
                     if (nbytes <= 0) 
                     {
-                        close(new_fd);
-                        printf("client closed connection.\n");
-                        break;
+                        if (errno == EAGAIN || errno == EWOULDBLOCK) 
+                        {
+                            // 稍後再嘗試接收數據
+                            continue;
+                        }
+                        else
+                        {
+                            printf("Error Receiving ENC(dense_softmax): %s\n", strerror(errno));
+                            close(new_fd);
+                            exit(1);
+                        }
                     }
                     enc_dense_softmax[k] = atof(indata);
                     data_size--;
                     k++;
                     memset(indata, 0, sizeof(indata));
                 } while (data_size > 0);
+                /* ********** TEST PASS ********** */
                 
-                /* ************************************************************ */
+                total = 0;
+                for (int i = 0; i < 10; i++)
+                {
+                    total += enc_dense_softmax[i];
+                }
 
-                /* ************************************************************ */
-                /* Backward Pass */
-                // Delta 4
+                if (total > 1.0001)
+                {
+                    data_is_correct = false;
+                    break;
+                }
+                
+                /* Delta4 */
+                loss = 0;
                 double enc_delta4[10];
                 for (int i = 0; i < 10; i++) 
                 {
                     enc_delta4[i] = enc_dense_softmax[i] - enc_vector_y[i]; // Derivative of Softmax + Cross entropy
+                    loss += abs(enc_delta4[i]);
                     enc_db2[i] = enc_delta4[i]; // Bias Changes
                 }
 
@@ -474,7 +592,7 @@ int main()
                     }
                 }
 
-                // Delta 3
+                /* Delta 3 */
 
                 double enc_delta3[120];
                 for (int i = 0; i < 120; i++) 
@@ -484,9 +602,9 @@ int main()
                     {
                         enc_delta3[i] += enc_dense_w2[i][j] * enc_delta4[j];
                     }
-                    //enc_delta3[i] *= d_sigmoid(dense_sum[i]);
                 }
 
+                /* Receiving ENC(delta3) */
                 data_size = 120;
                 k = 0;
                 do
@@ -528,7 +646,7 @@ int main()
                     }
                 }
 
-                // Delta2
+                /* Delta2 */ 
 
                 double enc_delta2[1568];
                 for (int i = 0; i < 1568; i++) 
@@ -568,7 +686,7 @@ int main()
                     k++;
                     memset(indata, 0, sizeof(indata));
                 } while (data_size > 0);
-                
+
                 k = 0;
                 for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
                 {
@@ -636,6 +754,7 @@ int main()
                 }
 
                 /* ************************************************************ */
+                
                 /* Update Weight*/
 
                 for (int i = 0; i < 120; i++) 
@@ -669,10 +788,20 @@ int main()
                         }
                     }
                 }
-                /* ************************************************************ */
+                if (total > 1.0001)
+                {
+                    data_is_correct = false;
+                    break;
+                }
             }
+            if (total > 1.0001)
+            {
+                data_is_correct = false;
+                break;
+            }
+            memset(indata, 0, sizeof(indata));
+			memset(outdata, 0, sizeof(outdata));
         }
-        cout << endl;
         auto endTime = chrono::high_resolution_clock::now();
         chrono::duration<double, milli> elapsed = endTime - startTime;
         double elapsedSeconds = elapsed.count() / 1000.0;
@@ -680,9 +809,8 @@ int main()
         int elapsedSeconds_ = static_cast<int>(elapsedSeconds) % 60;
         int elapsedMilliseconds = static_cast<int>(elapsedSeconds * 1000) % 1000;
         cout << fixed << setprecision(10);
-        cout << "Training time : " << elapsedMinutes << "m " << elapsedSeconds_ << "s " << elapsedMilliseconds << "ms";
+        cout << "\nTraining time : " << elapsedMinutes << "m " << elapsedSeconds_ << "s " << elapsedMilliseconds << "ms";
         cout << endl;
-
         cout << "Training over."<< endl;
         cout << "Send Weight to Client..." << endl;
         data_size = 8 * 5 * 5;
@@ -751,13 +879,11 @@ int main()
             memset(outdata, 0, sizeof(outdata));
         } while (data_size > 0);
 
-        // Clear outdata for the next message
         memset(indata, 0, sizeof(indata));
         memset(outdata, 0, sizeof(outdata));
 
         cout << "wait for connection..." << endl;
     }
-
     close(sock_fd);
 
     return 0;
