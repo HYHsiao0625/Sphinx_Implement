@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/yuan/Desktop/Sphinx_Implement/server.cpp" "CMakeFiles/Server.dir/server.cpp.o" "gcc" "CMakeFiles/Server.dir/server.cpp.o.d"
+  "/home/yuan/Desktop/Sphinx_Implement/main.cpp" "CMakeFiles/OUTPUT.dir/main.cpp.o" "gcc" "CMakeFiles/OUTPUT.dir/main.cpp.o.d"
   )
 
 # Targets to which this target links.

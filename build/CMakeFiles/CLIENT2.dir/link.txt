@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/CLIENT2.dir/client2.cpp.o -o CLIENT2 

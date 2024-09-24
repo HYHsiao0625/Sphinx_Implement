@@ -9,56 +9,187 @@
 
 using namespace std;
 using namespace std::chrono;
+class CNN
+{
+private:
+    /* ************************************************************ */
+	/* Training Parameter */
+	int filter_size;
+	double eta;
+	int batch_size;
+	double loss;
 
-const int filter_size = 5;
-const double eta = 0.01;
-const int batch_size = 1;
+    /* MNIST Data */
+    vector<vector<int>> _dataTrain;
+    vector<vector<int>> _dataTest;
+    vector<int> _labelTrain;
+    vector<int> _labelTest;
 
-vector<vector<int>> data_train(60000, vector<int>(784, 0));
-vector<vector<int>> data_test(10000, vector<int>(784, 0));
-vector<int> label_train(60000, 0);
-vector<int> label_test(10000, 0);
+    /* Weight */
+    vector<vector<vector<double>>> _convW;
+    vector<vector<vector<double>>> _convB;
+	vector<vector<vector<double>>> _convLayer;
+	vector<vector<vector<double>>> _sigLayer;
+	vector<vector<vector<double>>> _maxPooling;
+	vector<vector<vector<double>>> _maxLayer;
+    vector<double> _denseInput;
+	vector<vector<double>> _denseW;
+	vector<double> _denseB;
+	vector<double> _denseSum;
+	vector<double> _denseSigmoid;
+	vector<vector<double>> _denseW2;
+	vector<double> _denseB2;
+	vector<double> _denseSum2;
+	vector<double> _denseSoftmax;
 
-vector<vector<vector<double>>> conv_w(8, vector<vector<double>>(5, vector<double>(5, 0)));
-vector<vector<vector<double>>> conv_b(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> conv_layer(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> sig_layer(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> max_pooling(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> max_layer(8, vector<vector<double>>(14, vector<double>(14, 0)));
+    /* Encrypt Data */
+	vector<vector<int>> _encImg;
+	vector<int> _encLabel;
 
-vector<double> dense_input(1568, 0);
-vector<vector<double>> dense_w(1568, vector<double>(120, 0));
-vector<double> dense_b(120, 0);
-vector<double> dense_sum(120, 0);
-vector<double> dense_sigmoid(120, 0);
-vector<vector<double>> dense_w2(120, vector<double>(10, 0));
-vector<double> dense_b2(10, 0);
-vector<double> dense_sum2(10, 0);
-vector<double> dense_softmax(10, 0);
+	/* Encrypt Weight */
+    vector<vector<vector<double>>> _encConvW;
+	vector<vector<vector<double>>> _encConvB;
+	vector<vector<vector<double>>> _encConvLayer;
+	vector<vector<vector<double>>> _encSigLayer;
+	vector<vector<vector<double>>> _encMaxPooling;
+	vector<vector<vector<double>>> _encMaxLayer;
 
-vector<vector<double>> dw2(120, vector<double>(10, 0));
-vector<double> db2(10, 0);
-vector<vector<double>> dw1(1568, vector<double>(120, 0));
-vector<double> db1(120, 0);
+	vector<double> _encDenseInput;
+	vector<vector<double>> _encDenseW;
+	vector<double> _encDenseB;
+	vector<double> _encDenseSum;
+	vector<double> _encDenseSigmoid;
+	vector<vector<double>> _encDenseW2;
+	vector<double> _encDenseB2;
+	vector<double> _encDenseSum2;
+	vector<double> _encDenseSoftmax;
 
-vector<vector<vector<double>>> dw_max(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> dw_conv(8, vector<vector<double>>(5, vector<double>(5, 0)));
-vector<vector<vector<double>>> db_conv(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	vector<vector<double>> _encDffW2;
+	vector<double> _encDffB2;
+	vector<vector<double>> _encDffW1;
+	vector<double> _encDffB1;
+	vector<vector<vector<double>>> _encDffMaxW;
+	vector<vector<vector<double>>> _encDffConvW;
+	vector<vector<vector<double>>> _encDffConvB;
+public:
+    CNN(/* args */);
+    ~CNN();
+	void Init();
+	double Sigmoid(double x);
+	double DffSigmoid(double x);
+	double SoftmaxDen(vector<double> x, int len);
+    void Train(int epochs);
+    void ReadData();
+    void PrintImg(vector<vector<double>> img);
+    void InitialiseWeight();
+	void WriteInitWeight();
+	
+	void EncryptWeight();
+	void DecryptWeight();
+	void GiveImg(vector<int> vec, vector<vector<int>>& img);
+	void GiveLabel(int y, vector<int>& vector_y);
+	int GivePrediction();
+	void EncryptData(vector<vector<int>>& img, vector<int>& label);
+	void EncryptForward(vector<vector<int>>& _encImg);
+	void EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<int>>& _encImg);
+	void UpdateWeight();
+	void WriteTrainedWeight();
+	void Predict();
+	void Forward(vector<vector<int>>& img);
+};
 
+CNN::CNN()
+{
+	
+}
+
+CNN::~CNN()
+{
+
+}
+
+void CNN::Init()
+{
+	/* Parameter initialization */
+	/* Training Parameter */
+	filter_size = 5;
+	eta = 0.01;
+	batch_size = 100;
+	loss = 0;
+
+	/* Train & Test Data */
+	_dataTrain = vector<vector<int>>(60000, vector<int>(784, 0));
+    _dataTest = vector<vector<int>> (10000, vector<int>(784, 0));
+    _labelTrain = vector<int>(60000, 0);
+    _labelTest = vector<int>(10000, 0);
+
+    /* Weight */
+    _convW = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
+    _convB = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+    _convLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_sigLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_maxPooling = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_maxLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	
+	_denseInput = vector<double>(1568, 0);
+	_denseW = vector<vector<double>>(1568, vector<double>(120, 0));
+	_denseB = vector<double>(120, 0);
+	_denseSum = vector<double>(120, 0);
+	_denseSigmoid = vector<double>(120, 0);
+	_denseW2 = vector<vector<double>>(120, vector<double>(10, 0));
+	_denseB2 = vector<double>(10, 0);
+	_denseSum2 = vector<double>(10, 0);
+	_denseSoftmax = vector<double>(10, 0);
+
+	/* Encrypt Data */
+	_encImg = vector<vector<int>>(32, vector<int>(32, 0));
+	_encLabel = vector<int>(10, 0);
+
+	/* Encrypt Weight */
+	_encConvW = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
+	_encConvB = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_encConvLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_encSigLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_encMaxPooling = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_encMaxLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(14, vector<double>(14, 0)));
+
+	_encDenseInput = vector<double>(1568, 0);
+	_encDenseW = vector<vector<double>>(1568, vector<double>(120, 0));
+	_encDenseB = vector<double>(120, 0);
+	_encDenseSum = vector<double>(120, 0);
+	_encDenseSigmoid = vector<double>(120, 0);
+	_encDenseW2 = vector<vector<double>>(120, vector<double>(10, 0));
+	_encDenseB2 = vector<double>(10, 0);
+	_encDenseSum2 = vector<double>(10, 0);
+	_encDenseSoftmax = vector<double>(10, 0);
+
+	_encDffW2 = vector<vector<double>>(120, vector<double>(10, 0));
+	_encDffB2 = vector<double>(10, 0);
+	_encDffW1 = vector<vector<double>>(1568, vector<double>(120, 0));
+	_encDffB1 = vector<double>(120, 0);
+	_encDffMaxW = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_encDffConvW = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
+	_encDffConvB = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+
+	InitialiseWeight();
+	WriteInitWeight();
+}
 /* ************************************************************ */
 /* Helper functions */
-double sigmoid(double x) 
+double CNN::Sigmoid(double x) 
 {
 	if (x > 500) x = 500;
 	if (x < -500) x = -500;
 	return 1 / (1 + exp(-x));
 }
-double d_sigmoid(double x) 
+
+double CNN::DffSigmoid(double x) 
 {
-	double sig = sigmoid(x);
+	double sig = Sigmoid(x);
 	return sig * (1 - sig);
 }
-double softmax_den(vector<double> x, int len) 
+
+double CNN::SoftmaxDen(vector<double> x, int len) 
 {
 	double val = 0;
 	for (int i = 0; i < len; i++)
@@ -68,7 +199,94 @@ double softmax_den(vector<double> x, int len)
 	return val;
 }
 
-void initialise_weights() 
+void CNN::ReadData()
+{
+    /* Read Train Data */
+    ifstream csvread;
+    csvread.open("../mnist_train.csv", ios::in);
+    if (csvread) 
+    {
+        //Datei bis Ende einlesen und bei ';' strings trennen
+        string s;
+        int data_pt = 0;
+        while (getline(csvread, s)) 
+        {
+            stringstream ss(s);
+            int pxl = 0;
+            while (ss.good()) 
+            {
+                string substr;
+                getline(ss, substr, ',');
+                if (pxl == 0) 
+                {
+                    _labelTrain[data_pt] = stoi(substr);
+                }
+                else 
+                {
+                    _dataTrain[data_pt][pxl - 1] = stoi(substr);
+                }
+                pxl++;
+            }
+            data_pt++;
+        }
+        csvread.close();
+    }
+    else 
+    {
+        //cerr << "Fehler beim Lesen!" << endl;
+        cerr << "Can not read data!" << endl;
+    }
+    
+    /* Read Test Data */
+    csvread.open("../mnist_test.csv", ios::in);
+    if (csvread) 
+    {
+        //Datei bis Ende einlesen und bei ';' strings trennen
+        string s;
+        int data_pt = 0;
+        while (getline(csvread, s)) 
+        {
+            stringstream ss(s);
+            int pxl = 0;
+            while (ss.good()) 
+            {
+                string substr;
+                getline(ss, substr, ',');
+                if (pxl == 0) 
+                {
+                    _labelTest[data_pt] = stoi(substr);
+                }
+                else 
+                {
+                    _dataTest[data_pt][pxl - 1] = stoi(substr);
+                }
+                pxl++;
+            }
+            data_pt++;
+        }
+        csvread.close();
+    }
+    else 
+    {
+        //cerr << "Fehler beim Lesen!" << endl;
+        cerr << "Can not read data!" << endl;
+    }
+}
+
+void CNN::PrintImg(vector<vector<double>> _img)
+{
+    for(int i = 0; i < 14; i++)
+    {
+        for(int	j = 0; j < 14; j++)
+		{
+			cout << setw(8) << fixed << setprecision(4) << _img[i][j];
+		}
+		cout << endl;
+    }
+    cout << endl;
+}
+/* ************************************************************ */
+void CNN::InitialiseWeight()
 {
 	for (int i = 0; i < 8; i++) 
 	{
@@ -78,9 +296,9 @@ void initialise_weights()
 			{
 				if (j < 5 && k < 5) 
 				{
-					conv_w[i][j][k] = 2 * double(rand()) / RAND_MAX - 1; // Random double value between -1 and 1
+					_convW[i][j][k] = 2 * double(rand()) / RAND_MAX - 1; // Random double value between -1 and 1
 				}
-				conv_b[i][j][k] = 2 * double(rand()) / RAND_MAX - 1; // Random double value between -1 and 1
+				_convB[i][j][k] = 2 * double(rand()) / RAND_MAX - 1; // Random double value between -1 and 1
 			}
 		}
 	}
@@ -89,366 +307,149 @@ void initialise_weights()
 	{
 		for (int j = 0; j < 120; j++) 
 		{
-			dense_w[i][j] = 2 * double(rand()) / RAND_MAX - 1;
+			_denseW[i][j] = 2 * double(rand()) / RAND_MAX - 1;
 		}
 	}
 	for (int i = 0; i < 120; i++) 
 	{
-		dense_b[i] = 2 * double(rand()) / RAND_MAX - 1;
+		_denseB[i] = 2 * double(rand()) / RAND_MAX - 1;
 	}
 
 	for (int i = 0; i < 120; i++) 
 	{
 		for (int j = 0; j < 10; j++) 
 		{
-			dense_w2[i][j] = 2 * double(rand()) / RAND_MAX - 1;
+			_denseW2[i][j] = 2 * double(rand()) / RAND_MAX - 1;
 		}
 	}
 	for (int i = 0; i < 10; i++) 
 	{
-		dense_b2[i] = 2 * double(rand()) / RAND_MAX - 1;
+		_denseB2[i] = 2 * double(rand()) / RAND_MAX - 1;
 	}
 }
-/* ************************************************************ */
 
-/* ************************************************************ */
-/* Forward Pass */
-void forward_pass(vector<vector<int>> img) 
+void CNN::WriteInitWeight()
 {
-	// Convolution Operation + Sigmoid Activation
-	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	ofstream _initConvW;
+	ofstream _initConvB;
+	ofstream _initDenseW;
+	ofstream _initDenseB;
+	ofstream _initDenseW2;
+	ofstream _initDenseB2;
+	_initConvW.open("init_conv_w.txt");
+	if (!_initConvW.is_open()) 
 	{
-		for (int i = 0; i < 28; i++) 
-		{
-			for (int j = 0; j < 28; j++) 
-			{
-				max_pooling[filter_dim][i][j] = 0;
-				conv_layer[filter_dim][i][j] = 0;
-				sig_layer[filter_dim][i][j] = 0;
-				for (int k = 0; k < filter_size; k++) 
-				{
-					for (int l = 0; l < filter_size; l++) 
-					{
-						conv_layer[filter_dim][i][j] = img[i + k][j + l] * conv_w[filter_dim][k][l];
-					}
-				}
-				sig_layer[filter_dim][i][j] = sigmoid(conv_layer[filter_dim][i][j] + conv_b[filter_dim][i][j]);
-			}
-		}
-	}
-	
-	// MAX Pooling (max_pooling, max_layer)
-	double cur_max = 0;
-	int max_i = 0, max_j = 0;
-	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
-	{
-		for (int i = 0; i < 28; i += 2) 
-		{
-			for (int j = 0; j < 28; j += 2) 
-			{
-				max_i = i;
-				max_j = j;
-				cur_max = sig_layer[filter_dim][i][j];
-				for (int k = 0; k < 2; k++) 
-				{
-					for (int l = 0; l < 2; l++) 
-					{
-						if (sig_layer[filter_dim][i + k][j + l] > cur_max) {
-							max_i = i + k;
-							max_j = j + l;
-							cur_max = sig_layer[filter_dim][max_i][max_j];
-						}
-					}
-				}
-				max_pooling[filter_dim][max_i][max_j] = 1;
-				max_layer[filter_dim][i / 2][j / 2] = cur_max;
-			}
-		}
-	}
-
-	int k = 0;
-	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
-	{
-		for (int i = 0; i < 14; i++) 
-		{
-			for (int j = 0; j < 14; j++) 
-			{
-				dense_input[k] = max_layer[filter_dim][i][j];
-				k++;
-			}
-		}
-	}
-	// Dense Layer
-	for (int i = 0; i < 120; i++) 
-	{
-		dense_sum[i] = 0;
-		dense_sigmoid[i] = 0;
-		for (int j = 0; j < 1568; j++) 
-		{
-			dense_sum[i] += dense_w[j][i] * dense_input[j];
-		}
-		dense_sum[i] += dense_b[i];
-		dense_sigmoid[i] = sigmoid(dense_sum[i]);
-	}
-
-	// Dense Layer 2
-	for (int i = 0; i < 10; i++) 
-	{
-		dense_sum2[i] = 0;
-		for (int j = 0; j < 120; j++) 
-		{
-			dense_sum2[i] += dense_w2[j][i] * dense_sigmoid[j];
-		}
-		dense_sum2[i] += dense_b2[i];
-	}
-
-	// Softmax Output
-	double den = softmax_den(dense_sum2, 10);
-	for (int i = 0; i < 10; i++) 
-	{
-		dense_softmax[i] = exp(dense_sum2[i]) / den;
-	}
-}
-
-void update_weights() {
-	for (int i = 0; i < 120; i++) 
-	{
-		dense_b[i] -= eta * db1[i];
-		for (int j = 0; j < 10; j++) 
-		{
-			dense_b2[j] -= eta * db2[j];
-			dense_w2[i][j] -= eta * dw2[i][j];
-		}
-		for (int k = 0; k < 1568; k++) 
-		{
-			dense_w[k][i] -= eta * dw1[k][i];
-		}
-	}
-
-	for (int i = 0; i < 8; i++) 
-	{
-		for (int k = 0; k < 5; k++) 
-		{
-			for (int j = 0; j < 5; j++) 
-			{
-				conv_w[i][k][j] -= eta * dw_conv[i][k][j];
-			}
-		}
-		for (int l = 0; l < 28; l++) 
-		{
-			for (int m = 0; m < 28; m++) 
-			{
-				conv_b[i][l][m] -= eta * db_conv[i][l][m];
-			}
-		}
-	}
-}
-/* ************************************************************ */
-
-/* ************************************************************ */
-/* Backward Pass */
-void backward_pass(vector<double> y_hat, vector<int> y, vector<vector<int>> img) 
-{
-	double delta4[10];
-	for (int i = 0; i < 10; i++) 
-	{
-		delta4[i] = y_hat[i] - y[i]; // Derivative of Softmax + Cross entropy
-		db2[i] = delta4[i]; // Bias Changes
-	}
-
-	// Calculate Weight Changes for Dense Layer 2
-	for (int i = 0; i < 120; i++) 
-	{
-		for (int j = 0; j < 10; j++) 
-		{
-			dw2[i][j] = dense_sigmoid[i] * delta4[j];
-		}
-	}
-
-	// Delta 3
-	double delta3[120];
-	for (int i = 0; i < 120; i++) 
-	{
-		delta3[i] = 0;
-		for (int j = 0; j < 10; j++) 
-		{
-			delta3[i] += dense_w2[i][j] * delta4[j];
-		}
-		delta3[i] *= d_sigmoid(dense_sum[i]);
-	}
-	for (int i = 0; i < 120; i++) db1[i] = delta3[i]; // Bias Weight change
-
-	// Calculate Weight Changes for Dense Layer 1
-	for (int i = 0; i < 1568; i++) 
-	{
-		for (int j = 0; j < 120; j++) 
-		{
-			dw1[i][j] = dense_input[i] * delta3[j];
-		}
-	}
-
-	// Delta2
-	double delta2[1568];
-	for (int i = 0; i < 1568; i++) 
-	{
-		delta2[i] = 0;
-		for (int j = 0; j < 120; j++) 
-		{
-			delta2[i] += dense_w[i][j] * delta3[j];
-		}
-		delta2[i] *= d_sigmoid(dense_input[i]);
-	}
-
-	// Calc back-propagated max layer dw_max
-	int k = 0;
-	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
-	{
-		for (int i = 0; i < 28; i += 2) 
-		{
-			for (int j = 0; j < 28; j += 2) 
-			{
-				for (int l = 0; l < 2; l++) 
-				{
-					for (int m = 0; m < 2; m++) 
-					{
-						if (max_pooling[filter_dim][i + l][j + m] == 1) 
-						{
-							dw_max[filter_dim][i][j] = delta2[k];
-						}
-						else
-						{
-							dw_max[filter_dim][i][j] = 0;
-						}
-					}
-				}
-				k++;
-			}
-		}
-	}
-	// Calc Conv Bias Changes
-	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
-	{
-		for (int i = 0; i < 28; i++) 
-		{
-			for (int j = 0; j < 28; j++) 
-			{
-				db_conv[filter_dim][i][j] = dw_max[filter_dim][i][j];
-			}
-		}
-	}
-
-	// Set Conv Layer Weight changes to 0
+        cout << "Failed to open file init_conv_w.\n";
+    }
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
 		for (int i = 0; i < 5; i++) 
 		{
 			for (int j = 0; j < 5; j++) 
 			{
-				dw_conv[filter_dim][i][j] = 0;
+				_initConvW << _convW[filter_dim][i][j] << " ";
 			}
+			_initConvW << "\n";
 		}
+		_initConvW << "\n";
 	}
+	_initConvW.close();
 
-	// Calculate Weight Changes for Conv Layer
+	_initConvB.open("init_conv_b.txt");
+	if (!_initConvB.is_open()) 
+	{
+        cout << "Failed to open file init_conv_b.\n";
+    }
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
 		for (int i = 0; i < 28; i++) 
 		{
 			for (int j = 0; j < 28; j++) 
 			{
-				double cur_val = dw_max[filter_dim][i][j];
-				for (int k = 0; k < 5; k++) 
-				{
-					for (int l = 0; l < 5; l++) 
-					{
-						dw_conv[filter_dim][k][l] += img[i + k][j + l] * cur_val;
-					}
-				}
+				_initConvB << _convB[filter_dim][i][j] << " ";
 			}
+			_initConvB << "\n";
 		}
+		_initConvB << "\n";
 	}
+	_initConvB.close();
 
-
-}
-/* ************************************************************ */
-
-void read_train_data()
-{
-	ifstream csvread;
-	csvread.open("../mnist_train.csv", ios::in);
-	if (csvread) 
+	_initDenseW.open("init_dense_w.txt");
+	if (!_initDenseW.is_open()) 
 	{
-		//Datei bis Ende einlesen und bei ';' strings trennen
-		string s;
-		int data_pt = 0;
-		while (getline(csvread, s)) 
+        cout << "Failed to open file init_dense_w.\n";
+    }
+	for (int i = 0; i < 1568; i++) 
+	{
+		for (int j = 0; j < 120; j++) 
 		{
-			stringstream ss(s);
-			int pxl = 0;
-			while (ss.good()) 
-			{
-				string substr;
-				getline(ss, substr, ',');
-				if (pxl == 0) 
-				{
-					label_train[data_pt] = stoi(substr);
-				}
-				else 
-				{
-					data_train[data_pt][pxl - 1] = stoi(substr);
-				}
-				pxl++;
-			}
-			data_pt++;
+			_initDenseW << _denseW[i][j] << " ";
 		}
-		csvread.close();
+		_initDenseW << "\n\n";
 	}
-	else 
-	{
-		//cerr << "Fehler beim Lesen!" << endl;
-		cerr << "Can not read data!" << endl;
-	}
-}
+	_initDenseW.close();
 
-void read_test_data() 
-{
-	ifstream csvread;
-	csvread.open("../mnist_test.csv", ios::in);
-	if (csvread) 
+	_initDenseB.open("init_dense_b.txt");
+	if (!_initDenseB.is_open()) 
 	{
-		//Datei bis Ende einlesen und bei ';' strings trennen
-		string s;
-		int data_pt = 0;
-		while (getline(csvread, s)) 
+        cout << "Failed to open file init_dense_b.\n";
+    }
+	for (int i = 0; i < 120; i++) 
+	{
+		_initDenseB << _denseB[i] << "\n";
+	}
+	_initDenseB.close();
+
+	_initDenseW2.open("init_dense_w2.txt");
+	if (!_initDenseW2.is_open()) 
+	{
+        cout << "Failed to open file init_dense_w2.\n";
+    }
+	for (int i = 0; i < 120; i++) 
+	{
+		for (int j = 0; j < 10; j++) 
 		{
-			stringstream ss(s);
-			int pxl = 0;
-			while (ss.good()) 
-			{
-				string substr;
-				getline(ss, substr, ',');
-				if (pxl == 0) 
-				{
-					label_test[data_pt] = stoi(substr);
-				}
-				else 
-				{
-					data_test[data_pt][pxl - 1] = stoi(substr);
-				}
-				pxl++;
-			}
-			data_pt++;
+			_initDenseW2 << _denseW2[i][j] << " ";
 		}
-		csvread.close();
+		_initDenseW2 << "\n\n";
 	}
-	else 
+	_initDenseW2.close();
+
+	_initDenseB2.open("init_dense_b2.txt");
+	if (!_initDenseB2.is_open()) 
 	{
-		//cerr << "Fehler beim Lesen!" << endl;
-		cerr << "Can not read data!" << endl;
+        cout << "Failed to open file init_dense_b2.\n";
+    }
+	for (int i = 0; i < 10; i++) 
+	{
+		_initDenseB2 << _denseB2[i] << "\n";
 	}
+	_initDenseB2.close();
 }
 
-void give_img(vector<int> vec, vector<vector<int>>& img) 
+void CNN::EncryptWeight()
+{
+	/* Encrypt Weight */
+	_encConvW = _convW;
+    _encConvB = _convB;
+    _encDenseW = _denseW;
+    _encDenseB = _denseB ;
+    _encDenseW2 = _denseW2;
+    _encDenseB2 = _denseB2;
+}
+
+void CNN::DecryptWeight()
+{
+	/* Decrypt Weight */
+	_convW = _encConvW;
+    _convB = _encConvB;
+    _denseW = _encDenseW;
+    _denseB = _encDenseB;
+    _denseW2 = _encDenseW2;
+    _denseB2 = _encDenseB2;
+}
+
+void CNN::GiveImg(vector<int> vec, vector<vector<int>>& img) 
 {
 	int k = 0;
 	for (int i = 0; i < 32; i++) 
@@ -468,21 +469,24 @@ void give_img(vector<int> vec, vector<vector<int>>& img)
 	}
 }
 
-void give_y(int y, vector<int>& vector_y) 
+void CNN::GiveLabel(int y, vector<int>& label) 
 {
-	for (int i = 0; i < 10; i++) vector_y[i] = 0;
-	vector_y[y] = 1;
+	for (int i = 0; i < 10; i++)
+	{
+		label[i] = 0;
+	}
+	label[y] = 1;
 }
 
-int give_prediction() 
+int CNN::GivePrediction()
 {
-	double max_val = dense_softmax[0];
+	double max_val = _denseSoftmax[0];
 	int max_pos = 0;
 	for (int i = 1; i < 10; i++) 
 	{
-		if (dense_softmax[i] > max_val)
+		if (_denseSoftmax[i] > max_val)
 		{
-			max_val = dense_softmax[i];
+			max_val = _denseSoftmax[i];
 			max_pos = i;
 		}
 	}
@@ -490,134 +494,306 @@ int give_prediction()
 	return max_pos;
 }
 
-void write_weight_bais()
+void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
 {
-	ofstream conv_w_txt;
-	ofstream conv_b_txt;
-	ofstream dense_w_txt;
-	ofstream dense_b_txt;
-	ofstream dense_w2_txt;
-	ofstream dense_b2_txt;
-	conv_w_txt.open("conv_w.txt");
-	if (!conv_w_txt.is_open()) 
-	{
-        cout << "Failed to open file conv_w.\n";
-    }
-	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
-	{
-		for (int i = 0; i < 5; i++) 
-		{
-			for (int j = 0; j < 5; j++) 
-			{
-				conv_w_txt << conv_w[filter_dim][i][j] << " ";
-			}
-			conv_w_txt << "\n";
-		}
-		conv_w_txt << "\n";
-	}
-	conv_w_txt.close();
+	/* Encrypt Data */
+	_encImg = img;
+	_encLabel = label;
+}
 
-	conv_b_txt.open("conv_b.txt");
-	if (!conv_b_txt.is_open()) 
-	{
-        cout << "Failed to open file conv_b.\n";
-    }
+void CNN::EncryptForward(vector<vector<int>>& _encImg)
+{
+	/* Convolution Operation + Sigmoid Activation */
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
 		for (int i = 0; i < 28; i++) 
 		{
 			for (int j = 0; j < 28; j++) 
 			{
-				conv_b_txt << conv_b[filter_dim][i][j] << " ";
+				_encConvLayer[filter_dim][i][j] = 0;
+				_encSigLayer[filter_dim][i][j] = 0;
+				_encMaxPooling[filter_dim][i][j] = 0;
+				for (int k = 0; k < filter_size; k++) 
+				{
+					for (int l = 0; l < filter_size; l++) 
+					{
+						_encConvLayer[filter_dim][i][j] = _encImg[i + k][j + l] * _encConvW[filter_dim][k][l];
+					}
+				}
+				_encSigLayer[filter_dim][i][j] = Sigmoid(_encConvLayer[filter_dim][i][j] + _encConvB[filter_dim][i][j]);
 			}
-			conv_b_txt << "\n";
 		}
-		conv_b_txt << "\n";
+		//PrintImg(_encSigLayer[filter_dim]);
 	}
-	conv_b_txt.close();
-
-	dense_w_txt.open("dense_w.txt");
-	if (!dense_w_txt.is_open()) 
+	
+	/* MAX Pooling (max_pooling, max_layer) */ 
+	double cur_max = 0;
+	int max_i = 0, max_j = 0;
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
-        cout << "Failed to open file dense_w.\n";
-    }
-	for (int i = 0; i < 1568; i++) 
-	{
-		for (int j = 0; j < 120; j++) 
+		for (int i = 0; i < 28; i += 2) 
 		{
-			dense_w_txt << dense_w[i][j] << " ";
+			for (int j = 0; j < 28; j += 2) 
+			{
+				max_i = i;
+				max_j = j;
+				cur_max = _encSigLayer[filter_dim][i][j];
+				for (int k = 0; k < 2; k++) 
+				{
+					for (int l = 0; l < 2; l++) 
+					{
+						if (_encSigLayer[filter_dim][i + k][j + l] > cur_max) 
+						{
+							max_i = i + k;
+							max_j = j + l;
+							cur_max = _encSigLayer[filter_dim][max_i][max_j];
+						}
+					}
+				}
+				_encMaxPooling[filter_dim][max_i][max_j] = 1;
+				_encMaxLayer[filter_dim][i / 2][j / 2] = cur_max;
+			}
 		}
-		dense_w_txt << "\n\n";
 	}
-	dense_w_txt.close();
-
-	dense_b_txt.open("dense_b.txt");
-	if (!dense_b_txt.is_open()) 
+	
+	/* Flat (enc_max_layer, enc_dense_input) */
+	int k = 0;
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
-        cout << "Failed to open file dense_b.\n";
-    }
+		for (int i = 0; i < 14; i++) 
+		{
+			for (int j = 0; j < 14; j++) 
+			{
+				_encDenseInput[k] = _encMaxLayer[filter_dim][i][j];
+				k++;
+			}
+		}
+	}
+
+	/* Dense Layer1 Computing */
 	for (int i = 0; i < 120; i++) 
 	{
-		dense_b_txt << dense_b[i] << "\n";
+		_encDenseSum[i] = 0;
+		_encDenseSigmoid[i] = 0;
+		for (int j = 0; j < 1568; j++) 
+		{
+			_encDenseSum[i] += _encDenseW[j][i] * _encDenseInput[j];
+		}
+		_encDenseSum[i] += _encDenseB[i];
+		_encDenseSigmoid[i] = Sigmoid(_encDenseSum[i]);
 	}
-	dense_b_txt.close();
 
-	dense_w2_txt.open("dense_w2.txt");
-	if (!dense_w2_txt.is_open()) 
+	/* Dense Layer2 Computing */
+	for (int i = 0; i < 10; i++) 
 	{
-        cout << "Failed to open file dense_w2.\n";
-    }
+		_encDenseSum2[i] = 0;
+		for (int j = 0; j < 120; j++) 
+		{
+			_encDenseSum2[i] += _encDenseW2[j][i] * _encDenseSigmoid[j];
+		}
+		_encDenseSum2[i] += _encDenseB2[i];
+	}
+
+	/* Softmax Output */ 
+	double den = SoftmaxDen(_encDenseSum2, 10);
+	for (int i = 0; i < 10; i++) 
+	{
+		_encDenseSoftmax[i] = exp(_encDenseSum2[i]) / den;
+	}
+}
+
+void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<int>>& _encImg) 
+{
+	double _encDelta4[10];
+	for (int i = 0; i < 10; i++) 
+	{
+		_encDelta4[i] = y_hat[i] - y[i]; // Derivative of Softmax + Cross entropy
+		_encDffB2[i] = _encDelta4[i]; // Bias Changes
+		loss += abs(_encDelta4[i]);
+	}
+
+	// Calculate Weight Changes for Dense Layer 2
 	for (int i = 0; i < 120; i++) 
 	{
 		for (int j = 0; j < 10; j++) 
 		{
-			dense_w2_txt << dense_w2[i][j] << " ";
+			_encDffW2[i][j] = _encDenseSigmoid[i] * _encDelta4[j];
 		}
-		dense_w2_txt << "\n\n";
 	}
-	dense_w2_txt.close();
 
-	dense_b2_txt.open("dense_b2.txt");
-	if (!dense_b2_txt.is_open()) 
+	// Delta 3
+	double _encDelta3[120];
+	for (int i = 0; i < 120; i++) 
 	{
-        cout << "Failed to open file dense_b2.\n";
-    }
-	for (int i = 0; i < 10; i++) 
-	{
-		dense_b2_txt << dense_b2[i] << "\n";
+		_encDelta3[i] = 0;
+		for (int j = 0; j < 10; j++) 
+		{
+			_encDelta3[i] += _encDenseW2[i][j] * _encDelta4[j];
+		}
+		_encDelta3[i] *= DffSigmoid(_encDenseSum[i]);
 	}
-	dense_b2_txt.close();
+
+	for (int i = 0; i < 120; i++)
+	{
+		_encDffB1[i] = _encDelta3[i]; // Bias Weight change
+	}
+
+	// Calculate Weight Changes for Dense Layer 1
+	for (int i = 0; i < 1568; i++) 
+	{
+		for (int j = 0; j < 120; j++) 
+		{
+			_encDffW1[i][j] = _encDenseInput[i] * _encDelta3[j];
+		}
+	}
+
+	// _encDelta2
+	double _encDelta2[1568];
+	for (int i = 0; i < 1568; i++) 
+	{
+		_encDelta2[i] = 0;
+		for (int j = 0; j < 120; j++) 
+		{
+			_encDelta2[i] += _encDenseW[i][j] * _encDelta3[j];
+		}
+		_encDelta2[i] *= DffSigmoid(_encDenseInput[i]);
+	}
+
+	// Calc back-propagated max layer dw_max
+	int k = 0;
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 28; i += 2) 
+		{
+			for (int j = 0; j < 28; j += 2) 
+			{
+				for (int l = 0; l < 2; l++) 
+				{
+					for (int m = 0; m < 2; m++) 
+					{
+						if (_encMaxPooling[filter_dim][i + l][j + m] == 1) 
+						{
+							_encDffMaxW[filter_dim][i][j] = _encDelta2[k];
+						}
+						else
+						{
+							_encDffMaxW[filter_dim][i][j] = 0;
+						}
+					}
+				}
+				k++;
+			}
+		}
+	}
+	// Calc Conv Bias Changes
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 28; i++) 
+		{
+			for (int j = 0; j < 28; j++) 
+			{
+				_encDffConvB[filter_dim][i][j] = _encDffMaxW[filter_dim][i][j];
+			}
+		}
+	}
+
+	// Set Conv Layer Weight changes to 0
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 5; i++) 
+		{
+			for (int j = 0; j < 5; j++) 
+			{
+				_encDffConvW[filter_dim][i][j] = 0;
+			}
+		}
+	}
+
+	// Calculate Weight Changes for Conv Layer
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 28; i++) 
+		{
+			for (int j = 0; j < 28; j++) 
+			{
+				double cur_val = _encDffMaxW[filter_dim][i][j];
+				for (int k = 0; k < 5; k++) 
+				{
+					for (int l = 0; l < 5; l++) 
+					{
+						_encDffConvW[filter_dim][k][l] += _encImg[i + k][j + l] * cur_val;
+					}
+				}
+			}
+		}
+	}
 }
 
-int main(int argc, char *argv[]) 
+void CNN::UpdateWeight()
 {
-	time_t start, end;
-	read_test_data();
-	read_train_data();
-	initialise_weights();
-	int epoch = stoi(argv[1]);
-	int num = 0;
-	cout << "Start Training." << endl;
-	auto startTime = chrono::high_resolution_clock::now();
-	for (int i = 0; i < epoch; i++) 
+	for (int i = 0; i < 120; i++) 
 	{
-		for (int j = 0; j < batch_size; j++) 
+		_encDenseB[i] -= eta * _encDffB1[i];
+		for (int j = 0; j < 10; j++) 
 		{
-			cout << "\rEpoch: " << i << " --------- " << setw(3) << j << " / " << batch_size << " done." << flush;
-			num = rand() % 60000;
-			vector<vector<int>> img(32, vector<int>(32, 0));
-			vector<int> vector_y(10, 0);
-			give_y(label_train[num], vector_y);
-			give_img(data_train[num], img);
-			forward_pass(img);
-			backward_pass(dense_softmax, vector_y, img);
-			update_weights();
-			//num++;
+			_encDenseB2[j] -= eta * _encDffB2[j];
+			_encDenseW2[i][j] -= eta * _encDffW2[i][j];
+		}
+		for (int k = 0; k < 1568; k++) 
+		{
+			_encDenseW[k][i] -= eta * _encDffW1[k][i];
 		}
 	}
-	cout << endl;
 
-	write_weight_bais();
+	for (int i = 0; i < 8; i++) 
+	{
+		for (int k = 0; k < 5; k++) 
+		{
+			for (int j = 0; j < 5; j++) 
+			{
+				_encConvW[i][k][j] -= eta * _encDffConvW[i][k][j];
+			}
+		}
+		for (int l = 0; l < 28; l++) 
+		{
+			for (int m = 0; m < 28; m++) 
+			{
+				_encConvB[i][l][m] -= eta * _encDffConvB[i][l][m];
+			}
+		}
+	}
+}
+
+void CNN::Train(int epochs)
+{
+	time_t start, end;
+	cout << "Start Training." << endl;
+	auto startTime = chrono::high_resolution_clock::now();
+	int num = 0;
+	double Loss = 0;
+	ReadData();
+	EncryptWeight();
+	for (int i = 0; i < epochs; i++) 
+	{
+		loss = 0;
+		for (int j = 0; j < batch_size; j++)
+		{
+			cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " | Loss: " << fixed << Loss << " |" << flush;
+			num = rand() % 60000;
+			vector<vector<int>> img(32, vector<int>(32, 0));
+			vector<int> label(10, 0);
+			GiveLabel(_labelTrain[num], label);
+			GiveImg(_dataTrain[num], img);
+			EncryptData(img, label);
+			EncryptForward(_encImg);
+			EncryptBackword(_encDenseSoftmax, _encLabel, _encImg);
+			UpdateWeight();
+		}
+		Loss = loss / batch_size;
+	}
+	cout << endl;
+	DecryptWeight();
+	WriteTrainedWeight();
 	auto endTime = chrono::high_resolution_clock::now();
 	chrono::duration<double, milli> elapsed = endTime - startTime;
 
@@ -628,6 +804,206 @@ int main(int argc, char *argv[])
 	cout << fixed << setprecision(10);
 	cout << "Training time : " << elapsedMinutes << "m " << elapsedSeconds_ << "s " << elapsedMilliseconds << "ms";
 	cout << endl;
+}
+
+void CNN::WriteTrainedWeight()
+{
+	ofstream _trainConvW;
+	ofstream _trainConvB;
+	ofstream _trainDenseW;
+	ofstream _trainDenseB;
+	ofstream _trainDenseW2;
+	ofstream _trainDenseB2;
+	_trainConvW.open("trained_conv_w.txt");
+	if (!_trainConvW.is_open()) 
+	{
+        cout << "Failed to open file trained_conv_w.\n";
+    }
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 5; i++) 
+		{
+			for (int j = 0; j < 5; j++) 
+			{
+				_trainConvW << _convW[filter_dim][i][j] << " ";
+			}
+			_trainConvW << "\n";
+		}
+		_trainConvW << "\n";
+	}
+	_trainConvW.close();
+
+	_trainConvB.open("trained_conv_b.txt");
+	if (!_trainConvB.is_open()) 
+	{
+        cout << "Failed to open file trained_conv_b.\n";
+    }
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 28; i++) 
+		{
+			for (int j = 0; j < 28; j++) 
+			{
+				_trainConvB << _convB[filter_dim][i][j] << " ";
+			}
+			_trainConvB << "\n";
+		}
+		_trainConvB << "\n";
+	}
+	_trainConvB.close();
+
+	_trainDenseW.open("trained_dense_w.txt");
+	if (!_trainDenseW.is_open()) 
+	{
+        cout << "Failed to open file trained_dense_w.\n";
+    }
+	for (int i = 0; i < 1568; i++) 
+	{
+		for (int j = 0; j < 120; j++) 
+		{
+			_trainDenseW << _denseW[i][j] << " ";
+		}
+		_trainDenseW << "\n\n";
+	}
+	_trainDenseW.close();
+
+	_trainDenseB.open("trained_dense_b.txt");
+	if (!_trainDenseB.is_open()) 
+	{
+        cout << "Failed to open file trained_dense_b.\n";
+    }
+	for (int i = 0; i < 120; i++) 
+	{
+		_trainDenseB << _denseB[i] << "\n";
+	}
+	_trainDenseB.close();
+
+	_trainDenseW2.open("trained_dense_w2.txt");
+	if (!_trainDenseW2.is_open()) 
+	{
+        cout << "Failed to open file trained_dense_w2.\n";
+    }
+	for (int i = 0; i < 120; i++) 
+	{
+		for (int j = 0; j < 10; j++) 
+		{
+			_trainDenseW2 << _denseW2[i][j] << " ";
+		}
+		_trainDenseW2 << "\n\n";
+	}
+	_trainDenseW2.close();
+
+	_trainDenseB2.open("trained_dense_b2.txt");
+	if (!_trainDenseB2.is_open()) 
+	{
+        cout << "Failed to open file trained_dense_b2.\n";
+    }
+	for (int i = 0; i < 10; i++) 
+	{
+		_trainDenseB2 << _denseB2[i] << "\n";
+	}
+	_trainDenseB2.close();
+}
+
+void CNN::Forward(vector<vector<int>>& _img)
+{
+	/* Convolution Operation + Sigmoid Activation */
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 28; i++) 
+		{
+			for (int j = 0; j < 28; j++) 
+			{
+				_maxPooling[filter_dim][i][j] = 0;
+				_convLayer[filter_dim][i][j] = 0;
+				_sigLayer[filter_dim][i][j] = 0;
+				for (int k = 0; k < filter_size; k++) 
+				{
+					for (int l = 0; l < filter_size; l++) 
+					{
+						_convLayer[filter_dim][i][j] = _img[i + k][j + l] * _convW[filter_dim][k][l];
+					}
+				}
+				_sigLayer[filter_dim][i][j] = Sigmoid(_convLayer[filter_dim][i][j] + _convB[filter_dim][i][j]);
+			}
+		}
+	}
+	
+	/* MAX Pooling (max_pooling, max_layer) */
+	double cur_max = 0;
+	int max_i = 0, max_j = 0;
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 28; i += 2) 
+		{
+			for (int j = 0; j < 28; j += 2) 
+			{
+				max_i = i;
+				max_j = j;
+				cur_max = _sigLayer[filter_dim][i][j];
+				for (int k = 0; k < 2; k++) 
+				{
+					for (int l = 0; l < 2; l++) 
+					{
+						if (_sigLayer[filter_dim][i + k][j + l] > cur_max) {
+							max_i = i + k;
+							max_j = j + l;
+							cur_max = _sigLayer[filter_dim][max_i][max_j];
+						}
+					}
+				}
+				_maxPooling[filter_dim][max_i][max_j] = 1;
+				_maxLayer[filter_dim][i / 2][j / 2] = cur_max;
+			}
+		}
+	}
+
+	int k = 0;
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 14; i++) 
+		{
+			for (int j = 0; j < 14; j++) 
+			{
+				_denseInput[k] = _maxLayer[filter_dim][i][j];
+				k++;
+			}
+		}
+	}
+	/* Dense Layer */
+	for (int i = 0; i < 120; i++) 
+	{
+		_denseSum[i] = 0;
+		_denseSigmoid[i] = 0;
+		for (int j = 0; j < 1568; j++) 
+		{
+			_denseSum[i] += _denseW[j][i] * _denseInput[j];
+		}
+		_denseSum[i] += _denseB[i];
+		_denseSigmoid[i] = Sigmoid(_denseSum[i]);
+	}
+
+	/* Dense Layer 2 */ 
+	for (int i = 0; i < 10; i++) 
+	{
+		_denseSum2[i] = 0;
+		for (int j = 0; j < 120; j++) 
+		{
+			_denseSum2[i] += _denseW2[j][i] * _denseSigmoid[j];
+		}
+		_denseSum2[i] += _denseB2[i];
+	}
+
+	/* Softmax Output */
+	double den = SoftmaxDen(_denseSum2, 10);
+	for (int i = 0; i < 10; i++) 
+	{
+		_denseSoftmax[i] = exp(_denseSum2[i]) / den;
+	}
+}
+
+void CNN::Predict()
+{
 	int val_len = 600;
 	int cor = 0;
 	int confusion_mat[10][10];
@@ -640,11 +1016,14 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < val_len; i++) 
 	{
 		vector<vector<int>> img(32, vector<int>(32, 0));
-		give_img(data_test[i], img);
-		forward_pass(img);
-		int pre = give_prediction();
-		confusion_mat[label_test[i]][pre]++;
-		if (pre == label_test[i]) cor++;
+		GiveImg(_dataTest[i], img);
+		Forward(img);
+		int pre = GivePrediction();
+		confusion_mat[_labelTest[i]][pre]++;
+		if (pre == _labelTest[i])
+		{
+			cor++;
+		}
 	}
 	float accu = double(cor) / val_len;
 	cout << "Accuracy: " << accu << endl;
@@ -659,6 +1038,14 @@ int main(int argc, char *argv[])
 		}
 		cout << endl;
 	}
-	
-	return 0;
+}
+
+int main()
+{
+	srand(time(NULL));
+    CNN cnn;
+	cnn.Init();
+	cnn.Train(100);
+	cnn.Predict();
+    return 0;
 }
