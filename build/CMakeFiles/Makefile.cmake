@@ -121,5 +121,4 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/CNN.dir/DependInfo.cmake"
   "CMakeFiles/SERVER.dir/DependInfo.cmake"
   "CMakeFiles/CLIENT.dir/DependInfo.cmake"
-  "CMakeFiles/OUTPUT.dir/DependInfo.cmake"
   )

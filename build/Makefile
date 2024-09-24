@@ -155,114 +155,77 @@ CLIENT/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/build
 .PHONY : CLIENT/fast
 
-#=============================================================================
-# Target rules for targets named OUTPUT
-
-# Build rule for target.
-OUTPUT: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 OUTPUT
-.PHONY : OUTPUT
-
-# fast build rule for target.
-OUTPUT/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OUTPUT.dir/build.make CMakeFiles/OUTPUT.dir/build
-.PHONY : OUTPUT/fast
-
-client.o: client.cpp.o
-.PHONY : client.o
+src/client.o: src/client.cpp.o
+.PHONY : src/client.o
 
 # target to build an object file
-client.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/client.cpp.o
-.PHONY : client.cpp.o
+src/client.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/src/client.cpp.o
+.PHONY : src/client.cpp.o
 
-client.i: client.cpp.i
-.PHONY : client.i
+src/client.i: src/client.cpp.i
+.PHONY : src/client.i
 
 # target to preprocess a source file
-client.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/client.cpp.i
-.PHONY : client.cpp.i
+src/client.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/src/client.cpp.i
+.PHONY : src/client.cpp.i
 
-client.s: client.cpp.s
-.PHONY : client.s
+src/client.s: src/client.cpp.s
+.PHONY : src/client.s
 
 # target to generate assembly for a file
-client.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/client.cpp.s
-.PHONY : client.cpp.s
+src/client.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/src/client.cpp.s
+.PHONY : src/client.cpp.s
 
-cnn.o: cnn.cpp.o
-.PHONY : cnn.o
+src/cnn.o: src/cnn.cpp.o
+.PHONY : src/cnn.o
 
 # target to build an object file
-cnn.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CNN.dir/build.make CMakeFiles/CNN.dir/cnn.cpp.o
-.PHONY : cnn.cpp.o
+src/cnn.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CNN.dir/build.make CMakeFiles/CNN.dir/src/cnn.cpp.o
+.PHONY : src/cnn.cpp.o
 
-cnn.i: cnn.cpp.i
-.PHONY : cnn.i
+src/cnn.i: src/cnn.cpp.i
+.PHONY : src/cnn.i
 
 # target to preprocess a source file
-cnn.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CNN.dir/build.make CMakeFiles/CNN.dir/cnn.cpp.i
-.PHONY : cnn.cpp.i
+src/cnn.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CNN.dir/build.make CMakeFiles/CNN.dir/src/cnn.cpp.i
+.PHONY : src/cnn.cpp.i
 
-cnn.s: cnn.cpp.s
-.PHONY : cnn.s
+src/cnn.s: src/cnn.cpp.s
+.PHONY : src/cnn.s
 
 # target to generate assembly for a file
-cnn.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CNN.dir/build.make CMakeFiles/CNN.dir/cnn.cpp.s
-.PHONY : cnn.cpp.s
+src/cnn.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CNN.dir/build.make CMakeFiles/CNN.dir/src/cnn.cpp.s
+.PHONY : src/cnn.cpp.s
 
-main.o: main.cpp.o
-.PHONY : main.o
+src/server.o: src/server.cpp.o
+.PHONY : src/server.o
 
 # target to build an object file
-main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OUTPUT.dir/build.make CMakeFiles/OUTPUT.dir/main.cpp.o
-.PHONY : main.cpp.o
+src/server.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/src/server.cpp.o
+.PHONY : src/server.cpp.o
 
-main.i: main.cpp.i
-.PHONY : main.i
-
-# target to preprocess a source file
-main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OUTPUT.dir/build.make CMakeFiles/OUTPUT.dir/main.cpp.i
-.PHONY : main.cpp.i
-
-main.s: main.cpp.s
-.PHONY : main.s
-
-# target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OUTPUT.dir/build.make CMakeFiles/OUTPUT.dir/main.cpp.s
-.PHONY : main.cpp.s
-
-server.o: server.cpp.o
-.PHONY : server.o
-
-# target to build an object file
-server.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/server.cpp.o
-.PHONY : server.cpp.o
-
-server.i: server.cpp.i
-.PHONY : server.i
+src/server.i: src/server.cpp.i
+.PHONY : src/server.i
 
 # target to preprocess a source file
-server.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/server.cpp.i
-.PHONY : server.cpp.i
+src/server.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/src/server.cpp.i
+.PHONY : src/server.cpp.i
 
-server.s: server.cpp.s
-.PHONY : server.s
+src/server.s: src/server.cpp.s
+.PHONY : src/server.s
 
 # target to generate assembly for a file
-server.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/server.cpp.s
-.PHONY : server.cpp.s
+src/server.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/src/server.cpp.s
+.PHONY : src/server.cpp.s
 
 # Help Target
 help:
@@ -274,20 +237,16 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... CLIENT"
 	@echo "... CNN"
-	@echo "... OUTPUT"
 	@echo "... SERVER"
-	@echo "... client.o"
-	@echo "... client.i"
-	@echo "... client.s"
-	@echo "... cnn.o"
-	@echo "... cnn.i"
-	@echo "... cnn.s"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
-	@echo "... server.o"
-	@echo "... server.i"
-	@echo "... server.s"
+	@echo "... src/client.o"
+	@echo "... src/client.i"
+	@echo "... src/client.s"
+	@echo "... src/cnn.o"
+	@echo "... src/cnn.i"
+	@echo "... src/cnn.s"
+	@echo "... src/server.o"
+	@echo "... src/server.i"
+	@echo "... src/server.s"
 .PHONY : help
 
 

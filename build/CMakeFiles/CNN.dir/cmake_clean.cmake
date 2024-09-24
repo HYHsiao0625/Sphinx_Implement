@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/CNN.dir/cnn.cpp.o"
-  "CMakeFiles/CNN.dir/cnn.cpp.o.d"
+  "CMakeFiles/CNN.dir/src/cnn.cpp.o"
+  "CMakeFiles/CNN.dir/src/cnn.cpp.o.d"
   "CNN"
   "CNN.pdb"
 )

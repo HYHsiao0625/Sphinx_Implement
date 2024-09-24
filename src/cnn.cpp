@@ -203,7 +203,7 @@ void CNN::ReadData()
 {
     /* Read Train Data */
     ifstream csvread;
-    csvread.open("../mnist_train.csv", ios::in);
+    csvread.open("../data/mnist_train.csv", ios::in);
     if (csvread) 
     {
         //Datei bis Ende einlesen und bei ';' strings trennen
@@ -238,7 +238,7 @@ void CNN::ReadData()
     }
     
     /* Read Test Data */
-    csvread.open("../mnist_test.csv", ios::in);
+    csvread.open("../data/mnist_test.csv", ios::in);
     if (csvread) 
     {
         //Datei bis Ende einlesen und bei ';' strings trennen

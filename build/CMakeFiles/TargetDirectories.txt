@@ -1,6 +1,5 @@
 /home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles/CNN.dir
 /home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles/SERVER.dir
 /home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles/CLIENT.dir
-/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles/OUTPUT.dir
 /home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles/edit_cache.dir
 /home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles/rebuild_cache.dir

@@ -1,1 +1,1 @@
-/usr/bin/c++ CMakeFiles/CNN.dir/cnn.cpp.o -o CNN 
+/usr/bin/c++ CMakeFiles/CNN.dir/src/cnn.cpp.o -o CNN 

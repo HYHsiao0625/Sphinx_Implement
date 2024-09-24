@@ -69,28 +69,28 @@ include CMakeFiles/CLIENT.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/CLIENT.dir/flags.make
 
-CMakeFiles/CLIENT.dir/client.cpp.o: CMakeFiles/CLIENT.dir/flags.make
-CMakeFiles/CLIENT.dir/client.cpp.o: ../client.cpp
-CMakeFiles/CLIENT.dir/client.cpp.o: CMakeFiles/CLIENT.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/CLIENT.dir/client.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/CLIENT.dir/client.cpp.o -MF CMakeFiles/CLIENT.dir/client.cpp.o.d -o CMakeFiles/CLIENT.dir/client.cpp.o -c /home/yuan/Desktop/Sphinx_Implement/client.cpp
+CMakeFiles/CLIENT.dir/src/client.cpp.o: CMakeFiles/CLIENT.dir/flags.make
+CMakeFiles/CLIENT.dir/src/client.cpp.o: ../src/client.cpp
+CMakeFiles/CLIENT.dir/src/client.cpp.o: CMakeFiles/CLIENT.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/CLIENT.dir/src/client.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/CLIENT.dir/src/client.cpp.o -MF CMakeFiles/CLIENT.dir/src/client.cpp.o.d -o CMakeFiles/CLIENT.dir/src/client.cpp.o -c /home/yuan/Desktop/Sphinx_Implement/src/client.cpp
 
-CMakeFiles/CLIENT.dir/client.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CLIENT.dir/client.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yuan/Desktop/Sphinx_Implement/client.cpp > CMakeFiles/CLIENT.dir/client.cpp.i
+CMakeFiles/CLIENT.dir/src/client.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CLIENT.dir/src/client.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yuan/Desktop/Sphinx_Implement/src/client.cpp > CMakeFiles/CLIENT.dir/src/client.cpp.i
 
-CMakeFiles/CLIENT.dir/client.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CLIENT.dir/client.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yuan/Desktop/Sphinx_Implement/client.cpp -o CMakeFiles/CLIENT.dir/client.cpp.s
+CMakeFiles/CLIENT.dir/src/client.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CLIENT.dir/src/client.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yuan/Desktop/Sphinx_Implement/src/client.cpp -o CMakeFiles/CLIENT.dir/src/client.cpp.s
 
 # Object files for target CLIENT
 CLIENT_OBJECTS = \
-"CMakeFiles/CLIENT.dir/client.cpp.o"
+"CMakeFiles/CLIENT.dir/src/client.cpp.o"
 
 # External object files for target CLIENT
 CLIENT_EXTERNAL_OBJECTS =
 
-CLIENT: CMakeFiles/CLIENT.dir/client.cpp.o
+CLIENT: CMakeFiles/CLIENT.dir/src/client.cpp.o
 CLIENT: CMakeFiles/CLIENT.dir/build.make
 CLIENT: CMakeFiles/CLIENT.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable CLIENT"

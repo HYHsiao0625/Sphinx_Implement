@@ -69,28 +69,28 @@ include CMakeFiles/SERVER.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/SERVER.dir/flags.make
 
-CMakeFiles/SERVER.dir/server.cpp.o: CMakeFiles/SERVER.dir/flags.make
-CMakeFiles/SERVER.dir/server.cpp.o: ../server.cpp
-CMakeFiles/SERVER.dir/server.cpp.o: CMakeFiles/SERVER.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/SERVER.dir/server.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SERVER.dir/server.cpp.o -MF CMakeFiles/SERVER.dir/server.cpp.o.d -o CMakeFiles/SERVER.dir/server.cpp.o -c /home/yuan/Desktop/Sphinx_Implement/server.cpp
+CMakeFiles/SERVER.dir/src/server.cpp.o: CMakeFiles/SERVER.dir/flags.make
+CMakeFiles/SERVER.dir/src/server.cpp.o: ../src/server.cpp
+CMakeFiles/SERVER.dir/src/server.cpp.o: CMakeFiles/SERVER.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/SERVER.dir/src/server.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SERVER.dir/src/server.cpp.o -MF CMakeFiles/SERVER.dir/src/server.cpp.o.d -o CMakeFiles/SERVER.dir/src/server.cpp.o -c /home/yuan/Desktop/Sphinx_Implement/src/server.cpp
 
-CMakeFiles/SERVER.dir/server.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/SERVER.dir/server.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yuan/Desktop/Sphinx_Implement/server.cpp > CMakeFiles/SERVER.dir/server.cpp.i
+CMakeFiles/SERVER.dir/src/server.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/SERVER.dir/src/server.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yuan/Desktop/Sphinx_Implement/src/server.cpp > CMakeFiles/SERVER.dir/src/server.cpp.i
 
-CMakeFiles/SERVER.dir/server.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/SERVER.dir/server.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yuan/Desktop/Sphinx_Implement/server.cpp -o CMakeFiles/SERVER.dir/server.cpp.s
+CMakeFiles/SERVER.dir/src/server.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/SERVER.dir/src/server.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yuan/Desktop/Sphinx_Implement/src/server.cpp -o CMakeFiles/SERVER.dir/src/server.cpp.s
 
 # Object files for target SERVER
 SERVER_OBJECTS = \
-"CMakeFiles/SERVER.dir/server.cpp.o"
+"CMakeFiles/SERVER.dir/src/server.cpp.o"
 
 # External object files for target SERVER
 SERVER_EXTERNAL_OBJECTS =
 
-SERVER: CMakeFiles/SERVER.dir/server.cpp.o
+SERVER: CMakeFiles/SERVER.dir/src/server.cpp.o
 SERVER: CMakeFiles/SERVER.dir/build.make
 SERVER: CMakeFiles/SERVER.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable SERVER"

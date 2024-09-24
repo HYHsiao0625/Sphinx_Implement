@@ -66,7 +66,6 @@ CMAKE_BINARY_DIR = /home/yuan/Desktop/Sphinx_Implement/build
 all: CMakeFiles/CNN.dir/all
 all: CMakeFiles/SERVER.dir/all
 all: CMakeFiles/CLIENT.dir/all
-all: CMakeFiles/OUTPUT.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -77,7 +76,6 @@ preinstall:
 clean: CMakeFiles/CNN.dir/clean
 clean: CMakeFiles/SERVER.dir/clean
 clean: CMakeFiles/CLIENT.dir/clean
-clean: CMakeFiles/OUTPUT.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -113,7 +111,7 @@ CMakeFiles/CNN.dir/clean:
 CMakeFiles/SERVER.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SERVER.dir/build.make CMakeFiles/SERVER.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles --progress-num=7,8 "Built target SERVER"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles --progress-num=5,6 "Built target SERVER"
 .PHONY : CMakeFiles/SERVER.dir/all
 
 # Build rule for subdir invocation for target.
@@ -157,32 +155,6 @@ CLIENT: CMakeFiles/CLIENT.dir/rule
 CMakeFiles/CLIENT.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/CLIENT.dir/build.make CMakeFiles/CLIENT.dir/clean
 .PHONY : CMakeFiles/CLIENT.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/OUTPUT.dir
-
-# All Build rule for target.
-CMakeFiles/OUTPUT.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OUTPUT.dir/build.make CMakeFiles/OUTPUT.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OUTPUT.dir/build.make CMakeFiles/OUTPUT.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles --progress-num=5,6 "Built target OUTPUT"
-.PHONY : CMakeFiles/OUTPUT.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/OUTPUT.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles 2
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/OUTPUT.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/yuan/Desktop/Sphinx_Implement/build/CMakeFiles 0
-.PHONY : CMakeFiles/OUTPUT.dir/rule
-
-# Convenience name for target.
-OUTPUT: CMakeFiles/OUTPUT.dir/rule
-.PHONY : OUTPUT
-
-# clean rule for target.
-CMakeFiles/OUTPUT.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OUTPUT.dir/build.make CMakeFiles/OUTPUT.dir/clean
-.PHONY : CMakeFiles/OUTPUT.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.
