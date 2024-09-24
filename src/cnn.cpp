@@ -9,6 +9,7 @@
 
 using namespace std;
 using namespace std::chrono;
+
 class CNN
 {
 private:
@@ -18,6 +19,7 @@ private:
 	double eta;
 	int batch_size;
 	double loss;
+	int _t;
 
     /* MNIST Data */
     vector<vector<int>> _dataTrain;
@@ -83,7 +85,7 @@ public:
     void PrintImg(vector<vector<double>> img);
     void InitialiseWeight();
 	void WriteInitWeight();
-	
+
 	void EncryptWeight();
 	void DecryptWeight();
 	void GiveImg(vector<int> vec, vector<vector<int>>& img);
@@ -96,6 +98,9 @@ public:
 	void WriteTrainedWeight();
 	void Predict();
 	void Forward(vector<vector<int>>& img);
+
+	void AdamOptimizer(double _lr, double _b1, double _b2, double _eps);
+
 };
 
 CNN::CNN()
@@ -116,6 +121,7 @@ void CNN::Init()
 	eta = 0.01;
 	batch_size = 100;
 	loss = 0;
+	_t = 1;
 
 	/* Train & Test Data */
 	_dataTrain = vector<vector<int>>(60000, vector<int>(784, 0));
@@ -776,6 +782,7 @@ void CNN::Train(int epochs)
 	for (int i = 0; i < epochs; i++) 
 	{
 		loss = 0;
+		_t = 1;
 		for (int j = 0; j < batch_size; j++)
 		{
 			cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " | Loss: " << fixed << Loss << " |" << flush;
@@ -787,7 +794,8 @@ void CNN::Train(int epochs)
 			EncryptData(img, label);
 			EncryptForward(_encImg);
 			EncryptBackword(_encDenseSoftmax, _encLabel, _encImg);
-			UpdateWeight();
+			//UpdateWeight();
+			AdamOptimizer(0.01, 0.9, 0.999, 1e-8);
 		}
 		Loss = loss / batch_size;
 	}
@@ -1040,12 +1048,98 @@ void CNN::Predict()
 	}
 }
 
-int main()
+void CNN::AdamOptimizer(double _lr, double _b1, double _b2, double _eps)
 {
+	vector<vector<vector<double>>> m3d;
+	vector<vector<vector<double>>> v3d;
+	vector<vector<double>> m2d;
+	vector<vector<double>> v2d;
+	vector<double> m1d(120, 0);
+	vector<double> v1d(120, 0);
+	double m_hat = 0;
+	double v_hat = 0;
+	for (int i = 0; i < 120; i++) 
+	{
+		m1d[i] = _b1 * _encDffB1[i] + (1 - _b1) * _encDffB1[i];
+		v1d[i] = _b2 * _encDffB1[i] + (1 - _b2) * _encDffB1[i] * _encDffB1[i];
+		m_hat = m1d[i] / (1 - pow(_b1, _t));
+		v_hat = v1d[i] / (1 - pow(_b2, _t));
+		_encDenseB[i] -= _lr * m_hat / (sqrt(abs(v_hat)) + _eps);
+	}
+	m2d = vector<vector<double>>(120, vector<double>(10, 0));
+	v2d = vector<vector<double>>(120, vector<double>(10, 0));
+	for (int i = 0; i < 120; i++) 
+	{
+		for (int j = 0; j < 10; j++) 
+		{
+			m1d[j] = _b1 * _encDffB2[j] + (1 - _b1) * _encDffB2[j];
+			v1d[j] = _b2 * _encDffB2[j] + (1 - _b2) * _encDffB2[j] * _encDffB2[j];
+			m_hat = m1d[j] / (1 - pow(_b1, _t));
+			v_hat = v1d[j] / (1 - pow(_b2, _t));
+			_encDenseB2[j] -= _lr * m_hat / (sqrt(abs(v_hat)) + _eps);
+
+			m2d[i][j] = _b1 * _encDffW2[i][j] + (1 - _b1) * _encDffW2[i][j];
+			v2d[i][j] = _b2 * _encDffW2[i][j] + (1 - _b2) * _encDffW2[i][j] * _encDffW2[i][j];
+			m_hat = m2d[i][j] / (1 - pow(_b1, _t));
+			v_hat = v2d[i][j] / (1 - pow(_b2, _t));
+			_encDenseW2[i][j] -= _lr * m_hat / (sqrt(abs(v_hat)) + _eps);
+		}
+	}
+	m2d = vector<vector<double>>(1568, vector<double>(120, 0));
+	v2d = vector<vector<double>>(1568, vector<double>(120, 0));
+	for (int i = 0; i < 120; i++) 
+	{
+		for (int k = 0; k < 1568; k++) 
+		{
+			m2d[k][i] = _b1 * _encDffW1[k][i] + (1 - _b1) * _encDffW1[k][i];
+			v2d[k][i] = _b2 * _encDffW1[k][i] + (1 - _b2) * _encDffW1[k][i] * _encDffW1[k][i];
+			m_hat = m2d[k][i] / (1 - pow(_b1, _t));
+			v_hat = v2d[k][i] / (1 - pow(_b2, _t));
+			_encDenseW[k][i] -= _lr * m_hat / (sqrt(abs(v_hat)) + _eps);
+		}
+	}
+	
+	m3d = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
+	v3d = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
+	for (int i = 0; i < 8; i++) 
+	{
+		for (int k = 0; k < 5; k++) 
+		{
+			for (int j = 0; j < 5; j++) 
+			{
+				m3d[i][k][j] = _b1 * _encDffConvW[i][k][j] + (1 - _b1) * _encDffConvW[i][k][j];
+				v3d[i][k][j] = _b2 * _encDffConvW[i][k][j] + (1 - _b2) * _encDffConvW[i][k][j] * _encDffConvW[i][k][j];
+				m_hat = m3d[i][k][j] / (1 - pow(_b1, _t));
+				v_hat = v3d[i][k][j] / (1 - pow(_b2, _t));
+				_encConvW[i][k][j] -= _lr * m_hat / (sqrt(abs(v_hat)) + _eps);
+			}
+		}
+	}
+	m3d = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	v3d = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	for (int i = 0; i < 8; i++) 
+	{
+		for (int l = 0; l < 28; l++) 
+		{
+			for (int m = 0; m < 28; m++) 
+			{
+				m3d[i][l][m] = _b1 * _encDffConvB[i][l][m] + (1 - _b1) * _encDffConvB[i][l][m];
+				v3d[i][l][m] = _b2 * _encDffConvB[i][l][m] + (1 - _b2) * _encDffConvB[i][l][m] * _encDffConvB[i][l][m];
+				m_hat = m3d[i][l][m] / (1 - pow(_b1, _t));
+				v_hat = v3d[i][l][m] / (1 - pow(_b2, _t));
+				_encConvB[i][l][m] -= _lr * m_hat / (sqrt(abs(v_hat)) + _eps);
+			}
+		}
+	}
+	_t++;
+}
+int main(int argc, char *argv[])
+{
+	int epoch = stoi(argv[1]);
 	srand(time(NULL));
     CNN cnn;
 	cnn.Init();
-	cnn.Train(100);
+	cnn.Train(epoch);
 	cnn.Predict();
     return 0;
 }
