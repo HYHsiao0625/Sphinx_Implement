@@ -8,11 +8,16 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/yuan/Desktop/Sphinx_Implement/src/server.cpp" "CMakeFiles/SERVER.dir/src/server.cpp.o" "gcc" "CMakeFiles/SERVER.dir/src/server.cpp.o.d"
+  "/Users/huangzhixun/Desktop/Sphinx_Implement/src/ckks.cpp" "CMakeFiles/server.dir/src/ckks.cpp.o" "gcc" "CMakeFiles/server.dir/src/ckks.cpp.o.d"
+  "/Users/huangzhixun/Desktop/Sphinx_Implement/src/server.cpp" "CMakeFiles/server.dir/src/server.cpp.o" "gcc" "CMakeFiles/server.dir/src/server.cpp.o.d"
   )
 
-# Targets to which this target links.
-set(CMAKE_TARGET_LINKED_INFO_FILES
+# Targets to which this target links which contain Fortran sources.
+set(CMAKE_Fortran_TARGET_LINKED_INFO_FILES
+  )
+
+# Targets to which this target links which contain Fortran sources.
+set(CMAKE_Fortran_TARGET_FORWARD_LINKED_INFO_FILES
   )
 
 # Fortran module output directory.

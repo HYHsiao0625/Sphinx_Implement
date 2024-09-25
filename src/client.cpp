@@ -27,22 +27,22 @@ const int batch_size = 100;
 
 /* ************************************************************ */
 /* MNIST Data */
-vector<vector<int>> data_train(60000, vector<int>(784, 0));
-vector<vector<int>> data_test(10000, vector<int>(784, 0));
+vector<vector<int> > data_train(60000, vector<int>(784, 0));
+vector<vector<int> > data_test(10000, vector<int>(784, 0));
 vector<int> label_train(60000, 0);
 vector<int> label_test(10000, 0);
 
 /* ************************************************************ */
 /* Encryption Weight */
-vector<vector<vector<double>>> enc_conv_w(8, vector<vector<double>>(5, vector<double>(5, 0)));
-vector<vector<vector<double>>> enc_conv_b(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<double>> enc_dense_w(1568, vector<double>(120, 0));
+vector<vector<vector<double> > > enc_conv_w(8, vector<vector<double> >(5, vector<double>(5, 0)));
+vector<vector<vector<double> > > enc_conv_b(8, vector<vector<double> >(28, vector<double>(28, 0)));
+vector<vector<double> > enc_dense_w(1568, vector<double>(120, 0));
 vector<double> enc_dense_b(120, 0);
-vector<vector<double>> enc_dense_w2(120, vector<double>(10, 0));
+vector<vector<double> > enc_dense_w2(120, vector<double>(10, 0));
 vector<double> enc_dense_b2(10, 0);
 
-vector<vector<vector<double>>> enc_conv_layer(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> enc_sig_layer(8, vector<vector<double>>(28, vector<double>(28, 0)));
+vector<vector<vector<double> > > enc_conv_layer(8, vector<vector<double> >(28, vector<double>(28, 0)));
+vector<vector<vector<double> > > enc_sig_layer(8, vector<vector<double> >(28, vector<double>(28, 0)));
 
 vector<double> enc_dense_input(1568, 0);
 vector<double> enc_dense_sum(120, 0);
@@ -53,21 +53,21 @@ vector<double> enc_dense_softmax(10, 0);
 /* ************************************************************ */
 /* Forward Pass*/
 
-vector<vector<vector<double>>> conv_w(8, vector<vector<double>>(5, vector<double>(5, 0)));
-vector<vector<vector<double>>> conv_b(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> conv_layer(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> sig_layer(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> max_pooling(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> max_layer(8, vector<vector<double>>(14, vector<double>(14, 0)));
+vector<vector<vector<double> > > conv_w(8, vector<vector<double> >(5, vector<double>(5, 0)));
+vector<vector<vector<double> > > conv_b(8, vector<vector<double> >(28, vector<double>(28, 0)));
+vector<vector<vector<double> > > conv_layer(8, vector<vector<double> >(28, vector<double>(28, 0)));
+vector<vector<vector<double> > > sig_layer(8, vector<vector<double> >(28, vector<double>(28, 0)));
+vector<vector<vector<double> > > max_pooling(8, vector<vector<double> >(28, vector<double>(28, 0)));
+vector<vector<vector<double> > > max_layer(8, vector<vector<double> >(14, vector<double>(14, 0)));
 
 vector<double> dense_input(1568, 0);
-vector<vector<double>> dense_w(1568, vector<double>(120, 0));
+vector<vector<double> > dense_w(1568, vector<double>(120, 0));
 vector<double> dense_b(120, 0);
 vector<double> dense_sum(120, 0);
 vector<double> dense_sigmoid(120, 0);
 
 
-vector<vector<double>> dense_w2(120, vector<double>(10, 0));
+vector<vector<double> > dense_w2(120, vector<double>(10, 0));
 vector<double> dense_b2(10, 0);
 vector<double> dense_sum2(10, 0);
 vector<double> dense_softmax(10, 0);
@@ -202,7 +202,7 @@ void write_weight_bais()
 
 /* ************************************************************ */
 
-void forward_pass(vector<vector<double>> img) 
+void forward_pass(vector<vector<double> > img) 
 {
 	// Convolution Operation + Sigmoid Activation
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
@@ -378,7 +378,7 @@ void read_test_data()
 	}
 }
 
-void give_img(vector<int> vec, vector<vector<double>>& img) 
+void give_img(vector<int> vec, vector<vector<double> >& img) 
 {
 	int k = 0;
 	for (int i = 0; i < 32; i++) 
@@ -470,7 +470,7 @@ int main()
 		for (int j = 0; j < batch_size; j++)
 		{
 			cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " |" << flush;
-			vector<vector<double>> img(32, vector<double>(32, 0));
+			vector<vector<double> > img(32, vector<double>(32, 0));
 			vector<int> vector_y(10, 0);
 			int num = rand() % 60000;
 			give_y(label_train[num], vector_y);
@@ -898,7 +898,7 @@ int main()
 	cout << "Start Testing." << endl;
 	for (int i = 0; i < val_len; i++) 
 	{
-		vector<vector<double>> img(32, vector<double>(32, 0));
+		vector<vector<double> > img(32, vector<double>(32, 0));
 		give_img(data_test[i], img);
 		forward_pass(img);
 		int pre = give_prediction();

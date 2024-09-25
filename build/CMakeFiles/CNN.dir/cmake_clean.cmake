@@ -1,11 +1,13 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/CNN.dir/src/cnn.cpp.o"
-  "CMakeFiles/CNN.dir/src/cnn.cpp.o.d"
-  "CNN"
-  "CNN.pdb"
+  "CMakeFiles/cnn.dir/src/ckks.cpp.o"
+  "CMakeFiles/cnn.dir/src/ckks.cpp.o.d"
+  "CMakeFiles/cnn.dir/src/cnn.cpp.o"
+  "CMakeFiles/cnn.dir/src/cnn.cpp.o.d"
+  "cnn"
+  "cnn.pdb"
 )
 
 # Per-language clean rules from dependency scanning.
 foreach(lang CXX)
-  include(CMakeFiles/CNN.dir/cmake_clean_${lang}.cmake OPTIONAL)
+  include(CMakeFiles/cnn.dir/cmake_clean_${lang}.cmake OPTIONAL)
 endforeach()

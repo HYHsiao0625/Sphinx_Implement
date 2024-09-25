@@ -1,0 +1,24 @@
+// convW
+	for (size_t x = 0; x < _convW.size(); x++)
+		for (size_t y = 0; y < _convW[x].size(); y++)
+			for (size_t z = 0; z < _convW[x][y].size(); z++)
+				_ckks.decryptCipher(_encConvW[x][y][z], _secretkey, &_convW[x][y][z]);
+	// convB
+	for (size_t x = 0; x < _convB.size(); x++)
+		for (size_t y = 0; y < _convB[x].size(); y++)
+			for (size_t z = 0; z < _convB[x][y].size(); z++)
+				_ckks.decryptCipher(_encConvB[x][y][z], _secretkey, &_convB[x][y][z]);
+	// denseW
+	for (size_t x = 0; x < _denseW.size(); x++)
+		for (size_t y = 0; y < _denseW[x].size(); y++)
+				_ckks.decryptCipher(_encDenseW[x][y], _secretkey, &_denseW[x][y]);
+	// denseB
+	for (size_t x = 0; x < _denseB.size(); x++)
+		_ckks.decryptCipher(_encDenseB[x], _secretkey, &_denseB[x]);
+	// denseW2
+	for (size_t x = 0; x < _denseW2.size(); x++)
+		for (size_t y = 0; y < _denseW2[x].size(); y++)
+			_ckks.decryptCipher(_encDenseW2[x][y], _secretkey, &_denseW2[x][y]);
+	// denseB2
+    for (size_t x = 0; x < _denseB2.size(); x++)
+		_ckks.decryptCipher(_encDenseB2[x], _secretkey, &_denseB2[x]);

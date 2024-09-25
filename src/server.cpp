@@ -27,31 +27,31 @@ const int batch_size = 100;
 
 /* ************************************************************ */
 /* Encryption Weight */
-vector<vector<vector<double>>> enc_conv_w(8, vector<vector<double>>(5, vector<double>(5, 0)));
-vector<vector<vector<double>>> enc_conv_b(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> enc_conv_layer(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> enc_sig_layer(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> enc_max_pooling(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> enc_max_layer(8, vector<vector<double>>(14, vector<double>(14, 0)));
+vector<vector<vector<double> > > enc_conv_w(8, vector<vector<double> >(5, vector<double>(5, 0)));
+vector<vector<vector<double> > > enc_conv_b(8, vector<vector<double> >(28, vector<double>(28, 0)));
+vector<vector<vector<double> > > enc_conv_layer(8, vector<vector<double> >(28, vector<double>(28, 0)));
+vector<vector<vector<double> > > enc_sig_layer(8, vector<vector<double> >(28, vector<double>(28, 0)));
+vector<vector<vector<double> > > enc_max_pooling(8, vector<vector<double> >(28, vector<double>(28, 0)));
+vector<vector<vector<double> > > enc_max_layer(8, vector<vector<double> >(14, vector<double>(14, 0)));
 
 vector<double> enc_dense_input(1568, 0);
-vector<vector<double>> enc_dense_w(1568, vector<double>(120, 0));
+vector<vector<double> > enc_dense_w(1568, vector<double>(120, 0));
 vector<double> enc_dense_b(120, 0);
 vector<double> enc_dense_sum(120, 0);
 vector<double> enc_dense_sigmoid(120, 0);
-vector<vector<double>> enc_dense_w2(120, vector<double>(10, 0));
+vector<vector<double> > enc_dense_w2(120, vector<double>(10, 0));
 vector<double> enc_dense_b2(10, 0);
 vector<double> enc_dense_sum2(10, 0);
 vector<double> enc_dense_softmax(10, 0);
 
-vector<vector<double>> enc_dw2(120, vector<double>(10, 0));
+vector<vector<double> > enc_dw2(120, vector<double>(10, 0));
 vector<double> enc_db2(10, 0);
-vector<vector<double>> enc_dw1(1568, vector<double>(120, 0));
+vector<vector<double> > enc_dw1(1568, vector<double>(120, 0));
 vector<double> enc_db1(120, 0);
 
-vector<vector<vector<double>>> enc_dw_max(8, vector<vector<double>>(28, vector<double>(28, 0)));
-vector<vector<vector<double>>> enc_dw_conv(8, vector<vector<double>>(5, vector<double>(5, 0)));
-vector<vector<vector<double>>> enc_db_conv(8, vector<vector<double>>(28, vector<double>(28, 0)));
+vector<vector<vector<double> > > enc_dw_max(8, vector<vector<double> >(28, vector<double>(28, 0)));
+vector<vector<vector<double> > > enc_dw_conv(8, vector<vector<double> >(5, vector<double>(5, 0)));
+vector<vector<vector<double> > > enc_db_conv(8, vector<vector<double> >(28, vector<double>(28, 0)));
 
 /* ************************************************************ */
 
@@ -273,7 +273,7 @@ int main()
         write_weight_bais();
         cout << "Start Training." << endl;
         auto startTime = chrono::high_resolution_clock::now();
-        vector<vector<double>> enc_img(32, vector<double>(32, 0));
+        vector<vector<double> > enc_img(32, vector<double>(32, 0));
         vector<int> enc_vector_y(10, 0);
         for (int i = 0; i < epoch; i++) 
         {

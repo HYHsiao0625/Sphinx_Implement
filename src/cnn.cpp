@@ -6,9 +6,14 @@
 #include <vector>
 #include <iomanip>
 #include <chrono>
+#include <ranges>
+#include "seal/seal.h"
+#include "../include/ckks.hpp"
 
 using namespace std;
 using namespace std::chrono;
+using namespace seal;
+
 class CNN
 {
 private:
@@ -20,57 +25,64 @@ private:
 	double loss;
 
     /* MNIST Data */
-    vector<vector<int>> _dataTrain;
-    vector<vector<int>> _dataTest;
+    vector<vector<int> > _dataTrain;
+    vector<vector<int> > _dataTest;
     vector<int> _labelTrain;
     vector<int> _labelTest;
 
     /* Weight */
-    vector<vector<vector<double>>> _convW;
-    vector<vector<vector<double>>> _convB;
-	vector<vector<vector<double>>> _convLayer;
-	vector<vector<vector<double>>> _sigLayer;
-	vector<vector<vector<double>>> _maxPooling;
-	vector<vector<vector<double>>> _maxLayer;
+    vector<vector<vector<double> > > _convW;
+    vector<vector<vector<double> > > _convB;
+	vector<vector<vector<double> > > _convLayer;
+	vector<vector<vector<double> > > _sigLayer;
+	vector<vector<vector<double> > > _maxPooling;
+	vector<vector<vector<double> > > _maxLayer;
     vector<double> _denseInput;
-	vector<vector<double>> _denseW;
+	vector<vector<double> > _denseW;
 	vector<double> _denseB;
 	vector<double> _denseSum;
 	vector<double> _denseSigmoid;
-	vector<vector<double>> _denseW2;
+	vector<vector<double> > _denseW2;
 	vector<double> _denseB2;
 	vector<double> _denseSum2;
 	vector<double> _denseSoftmax;
 
+	/* Encrypt Params */
+	CKKS _ckks;
+	PublicKey _publickey;
+	SecretKey _secretkey;
+	Ciphertext _zero, _cipherTemp;
+
     /* Encrypt Data */
-	vector<vector<int>> _encImg;
-	vector<int> _encLabel;
+	vector<vector<Ciphertext> > _encImg;
+	vector<Ciphertext> _encLabel;
 
 	/* Encrypt Weight */
-    vector<vector<vector<double>>> _encConvW;
-	vector<vector<vector<double>>> _encConvB;
-	vector<vector<vector<double>>> _encConvLayer;
-	vector<vector<vector<double>>> _encSigLayer;
-	vector<vector<vector<double>>> _encMaxPooling;
-	vector<vector<vector<double>>> _encMaxLayer;
+    vector<vector<vector<Ciphertext> > > _encConvW;
+	vector<vector<vector<Ciphertext> > > _encConvB;
+	vector<vector<vector<Ciphertext> > > _encConvLayer;
+	vector<vector<vector<Ciphertext> > > _encSigLayer;
+	vector<vector<vector<Ciphertext> > > _encMaxPooling;
+	vector<vector<vector<Ciphertext> > > _encMaxLayer;
 
-	vector<double> _encDenseInput;
-	vector<vector<double>> _encDenseW;
-	vector<double> _encDenseB;
-	vector<double> _encDenseSum;
-	vector<double> _encDenseSigmoid;
-	vector<vector<double>> _encDenseW2;
-	vector<double> _encDenseB2;
-	vector<double> _encDenseSum2;
-	vector<double> _encDenseSoftmax;
+	vector<Ciphertext> _encDenseInput;
+	vector<vector<Ciphertext> > _encDenseW;
+	vector<Ciphertext> _encDenseB;
+	vector<Ciphertext> _encDenseSum;
+	vector<Ciphertext> _encDenseSigmoid;
+	vector<vector<Ciphertext> > _encDenseW2;
+	vector<Ciphertext> _encDenseB2;
+	vector<Ciphertext> _encDenseSum2;
+	vector<Ciphertext> _encDenseSoftmax;
 
-	vector<vector<double>> _encDffW2;
-	vector<double> _encDffB2;
-	vector<vector<double>> _encDffW1;
-	vector<double> _encDffB1;
-	vector<vector<vector<double>>> _encDffMaxW;
-	vector<vector<vector<double>>> _encDffConvW;
-	vector<vector<vector<double>>> _encDffConvB;
+	vector<vector<Ciphertext> > _encDffW2;
+	vector<Ciphertext> _encDffB2;
+	vector<vector<Ciphertext> > _encDffW1;
+	vector<Ciphertext> _encDffB1;
+	vector<vector<vector<Ciphertext> > > _encDffMaxW;
+	vector<vector<vector<Ciphertext> > > _encDffConvW;
+	vector<vector<vector<Ciphertext> > > _encDffConvB;
+
 public:
     CNN(/* args */);
     ~CNN();
@@ -80,22 +92,22 @@ public:
 	double SoftmaxDen(vector<double> x, int len);
     void Train(int epochs);
     void ReadData();
-    void PrintImg(vector<vector<double>> img);
-    void InitialiseWeight();
+    void PrintImg(vector<vector<double> > img);
+    void InitializeWeight();
 	void WriteInitWeight();
 	
 	void EncryptWeight();
 	void DecryptWeight();
-	void GiveImg(vector<int> vec, vector<vector<int>>& img);
+	void GiveImg(vector<int> vec, vector<vector<int> >& img);
 	void GiveLabel(int y, vector<int>& vector_y);
 	int GivePrediction();
-	void EncryptData(vector<vector<int>>& img, vector<int>& label);
-	void EncryptForward(vector<vector<int>>& _encImg);
-	void EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<int>>& _encImg);
+	void EncryptData(vector<vector<int> >& img, vector<int>& label);
+	void EncryptForward(vector<vector<Ciphertext> >& _encImg);
+	void EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<Ciphertext> >& _encImg);
 	void UpdateWeight();
 	void WriteTrainedWeight();
 	void Predict();
-	void Forward(vector<vector<int>>& img);
+	void Forward(vector<vector<int> >& img);
 };
 
 CNN::CNN()
@@ -118,61 +130,66 @@ void CNN::Init()
 	loss = 0;
 
 	/* Train & Test Data */
-	_dataTrain = vector<vector<int>>(60000, vector<int>(784, 0));
-    _dataTest = vector<vector<int>> (10000, vector<int>(784, 0));
+	_dataTrain = vector<vector<int> >(60000, vector<int>(784, 0));
+    _dataTest = vector<vector<int> > (10000, vector<int>(784, 0));
     _labelTrain = vector<int>(60000, 0);
     _labelTest = vector<int>(10000, 0);
 
     /* Weight */
-    _convW = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
-    _convB = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
-    _convLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
-	_sigLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
-	_maxPooling = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
-	_maxLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+    _convW = vector<vector<vector<double> > >(8, vector<vector<double> >(5, vector<double>(5, 0)));
+    _convB = vector<vector<vector<double> > >(8, vector<vector<double> >(28, vector<double>(28, 0)));
+    _convLayer = vector<vector<vector<double> > >(8, vector<vector<double> >(28, vector<double>(28, 0)));
+	_sigLayer = vector<vector<vector<double> > >(8, vector<vector<double> >(28, vector<double>(28, 0)));
+	_maxPooling = vector<vector<vector<double> > >(8, vector<vector<double> >(28, vector<double>(28, 0)));
+	_maxLayer = vector<vector<vector<double> > >(8, vector<vector<double> >(28, vector<double>(28, 0)));
 	
 	_denseInput = vector<double>(1568, 0);
-	_denseW = vector<vector<double>>(1568, vector<double>(120, 0));
+	_denseW = vector<vector<double> >(1568, vector<double>(120, 0));
 	_denseB = vector<double>(120, 0);
 	_denseSum = vector<double>(120, 0);
 	_denseSigmoid = vector<double>(120, 0);
-	_denseW2 = vector<vector<double>>(120, vector<double>(10, 0));
+	_denseW2 = vector<vector<double> >(120, vector<double>(10, 0));
 	_denseB2 = vector<double>(10, 0);
 	_denseSum2 = vector<double>(10, 0);
 	_denseSoftmax = vector<double>(10, 0);
 
 	/* Encrypt Data */
-	_encImg = vector<vector<int>>(32, vector<int>(32, 0));
-	_encLabel = vector<int>(10, 0);
+	_encImg = vector<vector<Ciphertext> >(32, vector<Ciphertext>(32));
+	_encLabel = vector<Ciphertext>(10);
 
 	/* Encrypt Weight */
-	_encConvW = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
-	_encConvB = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
-	_encConvLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
-	_encSigLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
-	_encMaxPooling = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
-	_encMaxLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(14, vector<double>(14, 0)));
+	_encConvW = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(5, vector<Ciphertext>(5)));
+	_encConvB = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(28, vector<Ciphertext>(28)));
+	_encConvLayer = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(28, vector<Ciphertext>(28)));
+	_encSigLayer = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(28, vector<Ciphertext>(28)));
+	_encMaxPooling = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(28, vector<Ciphertext>(28)));
+	_encMaxLayer = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(14, vector<Ciphertext>(14)));
 
-	_encDenseInput = vector<double>(1568, 0);
-	_encDenseW = vector<vector<double>>(1568, vector<double>(120, 0));
-	_encDenseB = vector<double>(120, 0);
-	_encDenseSum = vector<double>(120, 0);
-	_encDenseSigmoid = vector<double>(120, 0);
-	_encDenseW2 = vector<vector<double>>(120, vector<double>(10, 0));
-	_encDenseB2 = vector<double>(10, 0);
-	_encDenseSum2 = vector<double>(10, 0);
-	_encDenseSoftmax = vector<double>(10, 0);
+	_encDenseInput = vector<Ciphertext>(1568);
+	_encDenseW = vector<vector<Ciphertext> >(1568, vector<Ciphertext>(120));
+	_encDenseB = vector<Ciphertext>(120);
+	_encDenseSum = vector<Ciphertext>(120);
+	_encDenseSigmoid = vector<Ciphertext>(120);
+	_encDenseW2 = vector<vector<Ciphertext> >(120, vector<Ciphertext>(10));
+	_encDenseB2 = vector<Ciphertext>(10);
+	_encDenseSum2 = vector<Ciphertext>(10);
+	_encDenseSoftmax = vector<Ciphertext>(10);
 
-	_encDffW2 = vector<vector<double>>(120, vector<double>(10, 0));
-	_encDffB2 = vector<double>(10, 0);
-	_encDffW1 = vector<vector<double>>(1568, vector<double>(120, 0));
-	_encDffB1 = vector<double>(120, 0);
-	_encDffMaxW = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
-	_encDffConvW = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
-	_encDffConvB = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_encDffW2 = vector<vector<Ciphertext> >(120, vector<Ciphertext>(10));
+	_encDffB2 = vector<Ciphertext>(10);
+	_encDffW1 = vector<vector<Ciphertext> >(1568, vector<Ciphertext>(120));
+	_encDffB1 = vector<Ciphertext>(120);
+	_encDffMaxW = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(28, vector<Ciphertext>(28)));
+	_encDffConvW = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(5, vector<Ciphertext>(5)));
+	_encDffConvB = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(28, vector<Ciphertext>(28)));
 
-	InitialiseWeight();
+	/* Generate Keyset */
+	_ckks.generateKey(&_publickey, &_secretkey);
+	_ckks.encryptPlain(0, _publickey, &_zero);
+
+	InitializeWeight();
 	WriteInitWeight();
+
 }
 /* ************************************************************ */
 /* Helper functions */
@@ -273,7 +290,7 @@ void CNN::ReadData()
     }
 }
 
-void CNN::PrintImg(vector<vector<double>> _img)
+void CNN::PrintImg(vector<vector<double> > _img)
 {
     for(int i = 0; i < 14; i++)
     {
@@ -286,7 +303,7 @@ void CNN::PrintImg(vector<vector<double>> _img)
     cout << endl;
 }
 /* ************************************************************ */
-void CNN::InitialiseWeight()
+void CNN::InitializeWeight()
 {
 	for (int i = 0; i < 8; i++) 
 	{
@@ -428,28 +445,64 @@ void CNN::WriteInitWeight()
 }
 
 void CNN::EncryptWeight()
-{
+{	
 	/* Encrypt Weight */
-	_encConvW = _convW;
-    _encConvB = _convB;
-    _encDenseW = _denseW;
-    _encDenseB = _denseB ;
-    _encDenseW2 = _denseW2;
-    _encDenseB2 = _denseB2;
+	// convW
+	for (size_t x = 0; x < _convW.size(); x++)
+		for (size_t y = 0; y < _convW[x].size(); y++)
+			for (size_t z = 0; z < _convW[x][y].size(); z++)
+				_ckks.encryptPlain(_convW[x][y][z], _publickey, &_encConvW[x][y][z]);
+	// convB
+	for (size_t x = 0; x < _convB.size(); x++)
+		for (size_t y = 0; y < _convB[x].size(); y++)
+			for (size_t z = 0; z < _convB[x][y].size(); z++)
+				_ckks.encryptPlain(_convB[x][y][z], _publickey, &_encConvB[x][y][z]);
+	// denseW
+	for (size_t x = 0; x < _denseW.size(); x++)
+		for (size_t y = 0; y < _denseW[x].size(); y++)
+				_ckks.encryptPlain(_denseW[x][y], _publickey, &_encDenseW[x][y]);
+	// denseB
+	for (size_t x = 0; x < _denseB.size(); x++)
+		_ckks.encryptPlain(_denseB[x], _publickey, &_encDenseB[x]);
+	// denseW2
+	for (size_t x = 0; x < _denseW2.size(); x++)
+		for (size_t y = 0; y < _denseW2[x].size(); y++)
+			_ckks.encryptPlain(_denseW2[x][y], _publickey, &_encDenseW2[x][y]);
+	// denseB2
+    for (size_t x = 0; x < _denseB2.size(); x++)
+		_ckks.encryptPlain(_denseB2[x], _publickey, &_encDenseB2[x]);
 }
 
 void CNN::DecryptWeight()
 {
 	/* Decrypt Weight */
-	_convW = _encConvW;
-    _convB = _encConvB;
-    _denseW = _encDenseW;
-    _denseB = _encDenseB;
-    _denseW2 = _encDenseW2;
-    _denseB2 = _encDenseB2;
+	// convW
+	for (size_t x = 0; x < _convW.size(); x++)
+		for (size_t y = 0; y < _convW[x].size(); y++)
+			for (size_t z = 0; z < _convW[x][y].size(); z++)
+				_ckks.decryptCipher(_encConvW[x][y][z], _secretkey, &_convW[x][y][z]);
+	// convB
+	for (size_t x = 0; x < _convB.size(); x++)
+		for (size_t y = 0; y < _convB[x].size(); y++)
+			for (size_t z = 0; z < _convB[x][y].size(); z++)
+				_ckks.decryptCipher(_encConvB[x][y][z], _secretkey, &_convB[x][y][z]);
+	// denseW
+	for (size_t x = 0; x < _denseW.size(); x++)
+		for (size_t y = 0; y < _denseW[x].size(); y++)
+				_ckks.decryptCipher(_encDenseW[x][y], _secretkey, &_denseW[x][y]);
+	// denseB
+	for (size_t x = 0; x < _denseB.size(); x++)
+		_ckks.decryptCipher(_encDenseB[x], _secretkey, &_denseB[x]);
+	// denseW2
+	for (size_t x = 0; x < _denseW2.size(); x++)
+		for (size_t y = 0; y < _denseW2[x].size(); y++)
+			_ckks.decryptCipher(_encDenseW2[x][y], _secretkey, &_denseW2[x][y]);
+	// denseB2
+    for (size_t x = 0; x < _denseB2.size(); x++)
+		_ckks.decryptCipher(_encDenseB2[x], _secretkey, &_denseB2[x]);
 }
 
-void CNN::GiveImg(vector<int> vec, vector<vector<int>>& img) 
+void CNN::GiveImg(vector<int> vec, vector<vector<int> >& img) 
 {
 	int k = 0;
 	for (int i = 0; i < 32; i++) 
@@ -494,14 +547,18 @@ int CNN::GivePrediction()
 	return max_pos;
 }
 
-void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
+void CNN::EncryptData(vector<vector<int> >& img, vector<int>& label)
 {
 	/* Encrypt Data */
-	_encImg = img;
-	_encLabel = label;
+	for (size_t x = 0; x < img.size(); x++)
+		for (size_t y = 0; y < img[x].size(); y++)
+			_ckks.encryptPlain(img[x][y], _publickey, &_encImg[x][y]);
+
+	for (size_t i = 0; i < label.size(); i++)
+		_ckks.encryptPlain(label[i], _publickey, &_encLabel[i]);
 }
 
-void CNN::EncryptForward(vector<vector<int>>& _encImg)
+void CNN::EncryptForward(vector<vector<Ciphertext> >& _encImg)
 {
 	/* Convolution Operation + Sigmoid Activation */
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
@@ -510,17 +567,21 @@ void CNN::EncryptForward(vector<vector<int>>& _encImg)
 		{
 			for (int j = 0; j < 28; j++) 
 			{
-				_encConvLayer[filter_dim][i][j] = 0;
-				_encSigLayer[filter_dim][i][j] = 0;
-				_encMaxPooling[filter_dim][i][j] = 0;
+				_encConvLayer[filter_dim][i][j] = _zero;
+				_encSigLayer[filter_dim][i][j] = _zero;
+				_encMaxPooling[filter_dim][i][j] = _zero;
 				for (int k = 0; k < filter_size; k++) 
 				{
-					for (int l = 0; l < filter_size; l++) 
+					for (int l = 0; l < filter_size; l++)
 					{
-						_encConvLayer[filter_dim][i][j] = _encImg[i + k][j + l] * _encConvW[filter_dim][k][l];
+						_cipherTemp = _encConvW[filter_dim][k][l];
+						_ckks.evaluateCipher(&_encImg[i + k][j + l], "*", &_cipherTemp);
+						_encConvLayer[filter_dim][i][j] = _cipherTemp;
+						//_encConvLayer[filter_dim][i][j] = _encImg[i + k][j + l] * _encConvW[filter_dim][k][l];
 					}
 				}
-				_encSigLayer[filter_dim][i][j] = Sigmoid(_encConvLayer[filter_dim][i][j] + _encConvB[filter_dim][i][j]);
+
+				_encSigLayer[filter_dim][i][j] = Sigmoid(_encConvLayer[filter_dim][i][j] + _encConvB[filter_dim][i][j]); // need decrypt before sigmoid, but here's for encryt
 			}
 		}
 		//PrintImg(_encSigLayer[filter_dim]);
@@ -542,7 +603,7 @@ void CNN::EncryptForward(vector<vector<int>>& _encImg)
 				{
 					for (int l = 0; l < 2; l++) 
 					{
-						if (_encSigLayer[filter_dim][i + k][j + l] > cur_max) 
+						if (_encSigLayer[filter_dim][i + k][j + l] > cur_max) // cannot compare before decrypt
 						{
 							max_i = i + k;
 							max_j = j + l;
@@ -602,7 +663,7 @@ void CNN::EncryptForward(vector<vector<int>>& _encImg)
 	}
 }
 
-void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<int>>& _encImg) 
+void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<int> >& _encImg) 
 {
 	double _encDelta4[10];
 	for (int i = 0; i < 10; i++) 
@@ -780,7 +841,7 @@ void CNN::Train(int epochs)
 		{
 			cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " | Loss: " << fixed << Loss << " |" << flush;
 			num = rand() % 60000;
-			vector<vector<int>> img(32, vector<int>(32, 0));
+			vector<vector<int> > img(32, vector<int>(32, 0));
 			vector<int> label(10, 0);
 			GiveLabel(_labelTrain[num], label);
 			GiveImg(_dataTrain[num], img);
@@ -905,7 +966,7 @@ void CNN::WriteTrainedWeight()
 	_trainDenseB2.close();
 }
 
-void CNN::Forward(vector<vector<int>>& _img)
+void CNN::Forward(vector<vector<int> >& _img)
 {
 	/* Convolution Operation + Sigmoid Activation */
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
@@ -1015,7 +1076,7 @@ void CNN::Predict()
 	cout << "Start Testing." << endl;
 	for (int i = 0; i < val_len; i++) 
 	{
-		vector<vector<int>> img(32, vector<int>(32, 0));
+		vector<vector<int> > img(32, vector<int>(32, 0));
 		GiveImg(_dataTest[i], img);
 		Forward(img);
 		int pre = GivePrediction();

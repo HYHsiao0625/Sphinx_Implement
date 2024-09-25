@@ -1,11 +1,13 @@
 file(REMOVE_RECURSE
-  "CLIENT"
-  "CLIENT.pdb"
-  "CMakeFiles/CLIENT.dir/src/client.cpp.o"
-  "CMakeFiles/CLIENT.dir/src/client.cpp.o.d"
+  "CMakeFiles/client.dir/src/ckks.cpp.o"
+  "CMakeFiles/client.dir/src/ckks.cpp.o.d"
+  "CMakeFiles/client.dir/src/client.cpp.o"
+  "CMakeFiles/client.dir/src/client.cpp.o.d"
+  "client"
+  "client.pdb"
 )
 
 # Per-language clean rules from dependency scanning.
 foreach(lang CXX)
-  include(CMakeFiles/CLIENT.dir/cmake_clean_${lang}.cmake OPTIONAL)
+  include(CMakeFiles/client.dir/cmake_clean_${lang}.cmake OPTIONAL)
 endforeach()
