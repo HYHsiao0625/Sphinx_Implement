@@ -1,1 +1,13 @@
 *.csv
+build/init_conv_b.txt
+build/init_conv_w.txt
+build/init_dense_b.txt
+build/init_dense_b2.txt
+build/init_dense_w.txt
+build/init_dense_w2.txt
+build/trained_conv_b.txt
+build/trained_conv_w.txt
+build/trained_dense_b.txt
+build/trained_dense_b2.txt
+build/trained_dense_w.txt
+build/trained_dense_w2.txt
