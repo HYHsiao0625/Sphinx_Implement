@@ -4,7 +4,6 @@
 using namespace std;
 using namespace seal;
 
-// Function for Generate a Pair of Keys for Encrypt & Decrypt
 class CKKS {
     private:
         EncryptionParameters _param;
@@ -12,12 +11,12 @@ class CKKS {
         CKKSEncoder _codec;
 
     public:
-        CKKS();
-        ~CKKS();
+        CKKS(): _param(scheme_type::ckks), _context(_param), _codec(_context) {}
+        void initParams();
         void generateKey(PublicKey* publickey, SecretKey* secretkey);
-        void encryptPlain(double plaintext, PublicKey publickey, Ciphertext* ciphertext);
+        void encryptPlain(const double plaintext, PublicKey& publickey, Ciphertext* ciphertext, double scale = pow(2, 20));
         void evaluateCipher(Ciphertext* arg1, const char* specfied_operator, Ciphertext* arg2 = nullptr);
-        void decryptCipher(Ciphertext ciphertext, SecretKey secretkey, double* result);
+        void decryptCipher(const Ciphertext& ciphertext, const SecretKey& secretkey, double* result);
 };
 
 #endif

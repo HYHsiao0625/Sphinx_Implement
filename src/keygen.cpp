@@ -17,8 +17,10 @@ void outfile(string fileName, T& source) {
 int main() {
     PublicKey publickey;
     SecretKey secretkey;
+
+    CKKS ckks;
     
-    getKey(&publickey, &secretkey);
+    ckks.generateKey(&publickey, &secretkey);
 
     // Generate publickey.bin
     outfile("publickey.bin", publickey);

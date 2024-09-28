@@ -2,8 +2,8 @@
 #include <fstream>
 #include <string>
 #include <iomanip>
-#include <cstdio>
-#include "seal/seal.h"
+#include <vector>
+#include <seal/seal.h>
 
 using namespace std;
 using namespace seal;
@@ -15,59 +15,50 @@ class CKKS {
         CKKSEncoder _codec;
 
     public:
-        CKKS(): _param(scheme_type::ckks), _context(_param), _codec(_param) {
-            _param.set_poly_modulus_degree(8192);
-            _param.set_coeff_modulus(CoeffModulus::Create(8192, {60, 40, 40, 60}));
-        }
-        ~CKKS() {}
-        void generateKey(PublicKey *publickey, SecretKey *secretkey);
-        void encryptPlain(double plaintext, PublicKey publickey, Ciphertext* ciphertext);
+        CKKS(): _param(scheme_type::ckks), _context(_param), _codec(_context) {}
+        void initParams();
+        void generateKey(PublicKey* publickey, SecretKey* secretkey);
+        void encryptPlain(const double plaintext, const PublicKey& publickey, Ciphertext* ciphertext, double scale);
         void evaluateCipher(Ciphertext* arg1, const char* specfied_operator, Ciphertext* arg2 = nullptr);
-        void decryptCipher(Ciphertext ciphertext, SecretKey secretkey, double *result);
+        void decryptCipher(const Ciphertext& ciphertext, const SecretKey& secretkey, double* result);
 };
 
-// Function for Generate a Pair of Keys for Encrypt & Decrypt
-void CKKS::generateKey(PublicKey *publickey, SecretKey *secretkey) {
-    // Generate publickey
+// Initial parameters for ckks
+void CKKS::initParams() {
+    _param.set_poly_modulus_degree(8192);
+    _param.set_coeff_modulus(CoeffModulus::Create(8192, {60, 40, 40, 60}));
+    _context = SEALContext(_param);
+    _codec = CKKSEncoder(_context);
+}
+
+// Function to Generate a Pair of Keys for Encrypt & Decrypt
+void CKKS::generateKey(PublicKey* publickey, SecretKey* secretkey) {
     KeyGenerator keygen(_context);
-
-    // PublicKey public_key;
     keygen.create_public_key(*publickey);
-
-    // Generate secretkey
     *secretkey = keygen.secret_key();
 }
 
-// Function for Encrypt Plaintext with Publickey
-void CKKS::encryptPlain(double plaintext, PublicKey publickey, Ciphertext* ciphertext) {
-    // Encode plaintext
+// Function to Encrypt Plaintext with Publickey
+void CKKS::encryptPlain(const double plaintext, const PublicKey& publickey, Ciphertext* ciphertext, double scale = pow(2, 20)) {
     Plaintext encoded;
-    _codec.encode(plaintext, pow(2.0, 40), encoded);
-
-    // Setup encryptor
+    _codec.encode(plaintext, scale, encoded);
     Encryptor encryptor(_context, publickey);
-
-    // Encrypt and save into ciphertext
     encryptor.encrypt(encoded, *ciphertext);
 }
 
-// Function for Handle Required Operations for Ciphertext
-void CKKS::evaluateCipher(Ciphertext* arg1, const char* specfied_operator, Ciphertext* arg2 = nullptr) { 
-    // Get require operation
-    string operators[] = {"+", "-", "*", "^"};  // addition, subtraction, multiplication, square
-    // Setup evaluator
+// Function for Handling Operations on Ciphertext
+void CKKS::evaluateCipher(Ciphertext* arg1, const char* specfied_operator, Ciphertext* arg2 = nullptr) {
+    string operators[] = {"+", "-", "*", "^"};
     Evaluator evaluator(_context);
 
-    // Translate into index
-    int index = 0;
+    int index = -1;
     for (int i = 0; i < 4; i++) {
-        if (specfied_operator == operators[i]) {
+        if (!strcmp(specfied_operator, operators[i].c_str())) {
             index = i;
             break;
         }
     }
 
-    // Switch case
     switch (index) {
         case 0:
             evaluator.add_inplace(*arg1, *arg2);
@@ -81,17 +72,20 @@ void CKKS::evaluateCipher(Ciphertext* arg1, const char* specfied_operator, Ciphe
         case 3:
             evaluator.square_inplace(*arg1);
             break;
+        default:
+            cerr << "Invalid operator" << endl;
+            break;
     }
 }
 
-// Function for decrypt ciphertext with secretkey
-void CKKS::decryptCipher (Ciphertext ciphertext, SecretKey secretkey, double *result) {
-    // Decrypt
+// Function for Decrypting Ciphertext with SecretKey
+void CKKS::decryptCipher(const Ciphertext& ciphertext, const SecretKey& secretkey, double* result) {
     Decryptor decryptor(_context, secretkey);
-    Plaintext undecode;
-    decryptor.decrypt(ciphertext, undecode);
+    Plaintext decoded;
+    decryptor.decrypt(ciphertext, decoded);
+    
     vector<double> _result;
-    _codec.decode(undecode, _result);
+    _codec.decode(decoded, _result);
 
     *result = _result[0];
 }
