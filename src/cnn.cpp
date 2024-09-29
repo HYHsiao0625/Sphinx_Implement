@@ -51,7 +51,7 @@ private:
 	CKKS _ckks;
 	PublicKey _publickey;
 	SecretKey _secretkey;
-	Ciphertext _zero, _one, _cipherTemp;
+	Ciphertext _zero, _one, _eta, _cipherTemp;
 
     /* Encrypt Data */
 	vector<vector<Ciphertext> > _encImg;
@@ -103,7 +103,7 @@ public:
 	int GivePrediction();
 	void EncryptData(vector<vector<int> >& img, vector<int>& label);
 	void EncryptForward(vector<vector<Ciphertext> >& _encImg);
-	void EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<Ciphertext> >& _encImg);
+	void EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vector<vector<Ciphertext> >& _encImg);
 	void UpdateWeight();
 	void WriteTrainedWeight();
 	void Predict();
@@ -190,6 +190,7 @@ void CNN::Init()
 	/* Generate Based Number with Cipher*/
 	_ckks.encryptPlain(0, _publickey, &_zero);
 	_ckks.encryptPlain(1, _publickey, &_one);
+	_ckks.encryptPlain(eta, _publickey, &_eta);
 
 	InitializeWeight();
 	WriteInitWeight();
@@ -699,15 +700,19 @@ void CNN::EncryptForward(vector<vector<Ciphertext> >& _encImg)
 	}
 }
 
-void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<Ciphertext> >& _encImg) 
+void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vector<vector<Ciphertext> >& _encImg) 
 {
 	vector<Ciphertext> _encDelta4;
 	for (int i = 0; i < 10; i++) 
 	{	
-		_ckks.encryptPlain(y_hat[i] - y[i], _publickey, &_encDelta4[i]);
+		_cipherTemp = y[i];
+		_ckks.evaluateCipher(&y_hat[i], "-", &_cipherTemp);
+		_encDelta4[i] = _cipherTemp;
 		// _encDelta4[i] = y_hat[i] - y[i]; // Derivative of Softmax + Cross entropy
 		_encDffB2[i] = _encDelta4[i]; // Bias Changes
-		loss += abs(y_hat[i] - y[i]);
+		double _abs;
+		_ckks.decryptCipher(_cipherTemp, _secretkey, &_abs);
+		loss += abs(_abs);
 	}
 
 	// Calculate Weight Changes for Dense Layer 2
@@ -769,10 +774,13 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<C
 			_ckks.evaluateCipher(&_cipherTemp, "+", &_encDelta2[i]);
 			// _encDelta2[i] += _encDenseW[i][j] * _encDelta3[j];
 		}
+		
 		double decrypted;
-		_ckks.decryptCipher(_encDenseInput[i], _secretkey, &decryptede);
-
-		_encDelta2[i] *= DffSigmoid(_encDenseInput[i]);
+		_ckks.decryptCipher(_encDenseInput[i], _secretkey, &decrypted);
+		decrypted = DffSigmoid(decrypted);
+		_ckks.encryptPlain(decrypted, _publickey, &_cipherTemp);
+		_ckks.evaluateCipher(&_cipherTemp, "*", &_encDelta2[i]);
+		// _encDelta2[i] *= DffSigmoid(_encDenseInput[i]);
 	}
 
 	// Calc back-propagated max layer dw_max
@@ -786,14 +794,16 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<C
 				for (int l = 0; l < 2; l++) 
 				{
 					for (int m = 0; m < 2; m++) 
-					{
-						if (_encMaxPooling[filter_dim][i + l][j + m] == 1) 
+					{	
+						double decrypted;
+						_ckks.decryptCipher(_encMaxPooling[filter_dim][i + l][j + m], _secretkey, &decrypted);
+						if (decrypted == 1) 
 						{
 							_encDffMaxW[filter_dim][i][j] = _encDelta2[k];
 						}
 						else
 						{
-							_encDffMaxW[filter_dim][i][j] = 0;
+							_encDffMaxW[filter_dim][i][j] = _zero;
 						}
 					}
 				}
@@ -820,7 +830,7 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<C
 		{
 			for (int j = 0; j < 5; j++) 
 			{
-				_encDffConvW[filter_dim][i][j] = 0;
+				_encDffConvW[filter_dim][i][j] = _zero;
 			}
 		}
 	}
@@ -832,12 +842,14 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<C
 		{
 			for (int j = 0; j < 28; j++) 
 			{
-				double cur_val = _encDffMaxW[filter_dim][i][j];
+				Ciphertext cur_val = _encDffMaxW[filter_dim][i][j];
 				for (int k = 0; k < 5; k++) 
 				{
 					for (int l = 0; l < 5; l++) 
-					{
-						_encDffConvW[filter_dim][k][l] += _encImg[i + k][j + l] * cur_val;
+					{	
+						_ckks.evaluateCipher(&_encImg[i + k][j + l], "*", &cur_val);
+						_ckks.evaluateCipher(&cur_val, "+", &_encDffConvW[filter_dim][k][l]);
+						// _encDffConvW[filter_dim][k][l] += _encImg[i + k][j + l] * cur_val;
 					}
 				}
 			}
@@ -848,16 +860,34 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<C
 void CNN::UpdateWeight()
 {
 	for (int i = 0; i < 120; i++) 
-	{
-		_encDenseB[i] -= eta * _encDffB1[i];
+	{	
+		_cipherTemp = _encDffB1[i];
+		_ckks.evaluateCipher(&_eta, "*", &_cipherTemp);
+		_ckks.evaluateCipher(&_encDenseB[i], "-", &_cipherTemp);
+		_encDenseB[i] = _cipherTemp;
+		// _encDenseB[i] -= eta * _encDffB1[i];
+
 		for (int j = 0; j < 10; j++) 
-		{
-			_encDenseB2[j] -= eta * _encDffB2[j];
-			_encDenseW2[i][j] -= eta * _encDffW2[i][j];
+		{	
+			_cipherTemp = _encDffB2[j];
+			_ckks.evaluateCipher(&_eta, "*", &_cipherTemp);
+			_ckks.evaluateCipher(&_encDenseB2[j], "-", &_cipherTemp);
+			_encDenseB2[j] = _cipherTemp;
+			//_encDenseB2[j] -= eta * _encDffB2[j];
+			_cipherTemp = _encDffW2[i][j];
+			_ckks.evaluateCipher(&_eta, "*", &_cipherTemp);
+			_ckks.evaluateCipher(&_encDenseW2[i][j], "-", &_cipherTemp);
+			_encDenseW2[i][j] = _cipherTemp;
+			// _encDenseW2[i][j] -= eta * _encDffW2[i][j];
 		}
 		for (int k = 0; k < 1568; k++) 
-		{
-			_encDenseW[k][i] -= eta * _encDffW1[k][i];
+		{	
+			_cipherTemp = _encDffW1[k][i];
+			_ckks.evaluateCipher(&_eta, "*", &_cipherTemp);
+			_ckks.evaluateCipher(&_encDenseW[k][i], "-", &_cipherTemp);
+			_encDenseW[k][i] = _cipherTemp;
+			// a -= b --> a = a - b
+			// _encDenseW[k][i] -= eta * _encDffW1[k][i];
 		}
 	}
 
@@ -866,15 +896,23 @@ void CNN::UpdateWeight()
 		for (int k = 0; k < 5; k++) 
 		{
 			for (int j = 0; j < 5; j++) 
-			{
-				_encConvW[i][k][j] -= eta * _encDffConvW[i][k][j];
+			{	
+				_cipherTemp = _encDffConvW[i][k][j];
+				_ckks.evaluateCipher(&_eta, "*", &_cipherTemp);
+				_ckks.evaluateCipher(&_encConvW[i][k][j], "-", &_cipherTemp);
+				_encConvW[i][k][j] = _cipherTemp;
+				// _encConvW[i][k][j] -= eta * _encDffConvW[i][k][j];
 			}
 		}
 		for (int l = 0; l < 28; l++) 
 		{
 			for (int m = 0; m < 28; m++) 
-			{
-				_encConvB[i][l][m] -= eta * _encDffConvB[i][l][m];
+			{	
+				_cipherTemp = _encDffConvB[i][l][m];
+				_ckks.evaluateCipher(&_eta, "*", &_cipherTemp);
+				_ckks.evaluateCipher(&_encConvB[i][l][m], "-", &_cipherTemp);
+				_encConvB[i][l][m] = _cipherTemp;
+				// _encConvB[i][l][m] -= eta * _encDffConvB[i][l][m];
 			}
 		}
 	}

@@ -1,0 +1,4 @@
+_cipherTemp = _encDffConvB[i][l][m];
+_ckks.evaluateCipher(&_eta, "*", &_cipherTemp);
+_ckks.evaluateCipher(&_encConvB[i][l][m], "-", &_cipherTemp);
+_encConvB[i][l][m] = _cipherTemp;
