@@ -225,7 +225,13 @@ void CNN::ReadData()
 {
     /* Read Train Data */
     ifstream csvread;
-    csvread.open("../data/mnist_train.csv", ios::in);
+	try {
+		csvread.open("../data/mnist_train.csv", ios::in);
+	}
+	catch (exception& e) {
+		cerr << "Failed to load mnist_train.csv" << e.what() << endl;
+	}
+    
     if (csvread) 
     {
         //Datei bis Ende einlesen und bei ';' strings trennen
@@ -580,7 +586,7 @@ void CNN::EncryptForward(vector<vector<Ciphertext> >& _encImg)
 					for (int l = 0; l < filter_size; l++)
 					{
 						_cipherTemp = _encConvW[filter_dim][k][l];
-						_ckks.evaluateCipher(&_encImg[i + k][j + l], "*", &_cipherTemp);
+						_ckks.evaluateCipher(&_cipherTemp, "*", &_encImg[i + k][j + l]);
 						_encConvLayer[filter_dim][i][j] = _cipherTemp;
 						//_encConvLayer[filter_dim][i][j] = _encImg[i + k][j + l] * _encConvW[filter_dim][k][l];
 					}
@@ -654,11 +660,11 @@ void CNN::EncryptForward(vector<vector<Ciphertext> >& _encImg)
 		for (int j = 0; j < 1568; j++) 
 		{	
 			_cipherTemp = _encDenseInput[j];
-			_ckks.evaluateCipher(&_encDenseW[j][i], "*", &_cipherTemp);
-			_ckks.evaluateCipher(&_cipherTemp, "+", &_encDenseSum[i]);
+			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDenseW[j][i]);
+			_ckks.evaluateCipher(& _encDenseSum[i], "+", &_cipherTemp);
 			// _encDenseSum[i] += _encDenseW[j][i] * _encDenseInput[j];
 		}
-		_ckks.evaluateCipher(&_encDenseB[i], "+", &_encDenseSum[i]);
+		_ckks.evaluateCipher(&_encDenseSum[i], "+", &_encDenseB[i]);
 		// _encDenseSum[i] += _encDenseB[i];
 		double res;
 		_ckks.decryptCipher(_encDenseSum[i], _secretkey, &res);
@@ -673,12 +679,12 @@ void CNN::EncryptForward(vector<vector<Ciphertext> >& _encImg)
 		_encDenseSum2[i] = _zero;
 		for (int j = 0; j < 120; j++)
 		{	
-			_cipherTemp = _encDenseSigmoid[j];
-			_ckks.evaluateCipher(&_encDenseW2[j][i], "*", &_cipherTemp);
-			_ckks.evaluateCipher(&_cipherTemp, "+", &_encDenseSum2[i]);
+			_cipherTemp = _encDenseW2[j][i];
+			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDenseSigmoid[j]);
+			_ckks.evaluateCipher(&_encDenseSum2[i], "+", &_cipherTemp);
 			// _encDenseSum2[i] += _encDenseW2[j][i] * _encDenseSigmoid[j];
 		}
-		_ckks.evaluateCipher(&_encDenseB2[i], "+", &_encDenseSum2[i]);
+		_ckks.evaluateCipher(&_encDenseSum2[i], "+", &_encDenseB2[i]);
 		// _encDenseSum2[i] += _encDenseB2[i];
 	}
 
@@ -705,8 +711,8 @@ void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vect
 	vector<Ciphertext> _encDelta4;
 	for (int i = 0; i < 10; i++) 
 	{	
-		_cipherTemp = y[i];
-		_ckks.evaluateCipher(&y_hat[i], "-", &_cipherTemp);
+		_cipherTemp = y_hat[i];
+		_ckks.evaluateCipher(&_cipherTemp, "-", &y[i]);
 		_encDelta4[i] = _cipherTemp;
 		// _encDelta4[i] = y_hat[i] - y[i]; // Derivative of Softmax + Cross entropy
 		_encDffB2[i] = _encDelta4[i]; // Bias Changes
@@ -720,8 +726,8 @@ void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vect
 	{
 		for (int j = 0; j < 10; j++) 
 		{	
-			_cipherTemp = _encDelta4[j];
-			_ckks.evaluateCipher(&_encDenseSigmoid[i], "*", &_cipherTemp);
+			_cipherTemp = _encDenseSigmoid[i];
+			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDelta4[j]);
 			_encDffW2[i][j] = _cipherTemp;
 		}
 	}
@@ -732,16 +738,16 @@ void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vect
 		_encDelta3[i] = _zero;
 		for (int j = 0; j < 10; j++) 
 		{	
-			_cipherTemp = _encDelta4[j];
-			_ckks.evaluateCipher(&_encDenseW2[i][j], "*", &_cipherTemp);
-			_ckks.evaluateCipher(&_cipherTemp, "+",&_encDelta3[i]);
+			_cipherTemp = _encDenseW2[i][j];
+			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDelta4[j]);
+			_ckks.evaluateCipher(&_encDelta3[i], "+",&_cipherTemp);
 			// _encDelta3[i] += _encDenseW2[i][j] * _encDelta4[j];
 		}
 		double decrypted;
 		_ckks.decryptCipher(_encDenseSum[i], _secretkey, &decrypted);
 		decrypted = DffSigmoid(decrypted);
 		_ckks.encryptPlain(decrypted, _publickey, &_cipherTemp);
-		_ckks.evaluateCipher(&_cipherTemp, "*", &_encDelta3[i]);
+		_ckks.evaluateCipher(&_encDelta3[i], "*", &_cipherTemp);
 		// _encDelta3[i] *= DffSigmoid(decrypted);
 	}
 
@@ -755,8 +761,8 @@ void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vect
 	{
 		for (int j = 0; j < 120; j++) 
 		{	
-			_cipherTemp = _encDelta3[j];
-			_ckks.evaluateCipher(&_encDenseInput[i], "*", &_cipherTemp);
+			_cipherTemp = _encDenseInput[i];
+			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDelta3[j]);
 			_encDffW1[i][j] = _cipherTemp;
 			// _encDffW1[i][j] = _encDenseInput[i] * _encDelta3[j];
 		}
@@ -769,9 +775,9 @@ void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vect
 		_encDelta2[i] = _zero;
 		for (int j = 0; j < 120; j++) 
 		{	
-			_cipherTemp = _encDelta3[j];
-			_ckks.evaluateCipher(&_encDenseW[i][j], "*", &_cipherTemp);
-			_ckks.evaluateCipher(&_cipherTemp, "+", &_encDelta2[i]);
+			_cipherTemp = _encDenseW[i][j];
+			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDelta3[j]);
+			_ckks.evaluateCipher(&_encDelta2[i], "+", &_cipherTemp);
 			// _encDelta2[i] += _encDenseW[i][j] * _encDelta3[j];
 		}
 		
@@ -779,7 +785,7 @@ void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vect
 		_ckks.decryptCipher(_encDenseInput[i], _secretkey, &decrypted);
 		decrypted = DffSigmoid(decrypted);
 		_ckks.encryptPlain(decrypted, _publickey, &_cipherTemp);
-		_ckks.evaluateCipher(&_cipherTemp, "*", &_encDelta2[i]);
+		_ckks.evaluateCipher(&_encDelta2[i], "*", &_cipherTemp);
 		// _encDelta2[i] *= DffSigmoid(_encDenseInput[i]);
 	}
 
@@ -847,8 +853,9 @@ void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vect
 				{
 					for (int l = 0; l < 5; l++) 
 					{	
-						_ckks.evaluateCipher(&_encImg[i + k][j + l], "*", &cur_val);
-						_ckks.evaluateCipher(&cur_val, "+", &_encDffConvW[filter_dim][k][l]);
+						_cipherTemp = _encImg[i + k][j + l];
+						_ckks.evaluateCipher(&_cipherTemp, "*", &cur_val);
+						_ckks.evaluateCipher(&_encDffConvW[filter_dim][k][l], "+", &_cipherTemp);
 						// _encDffConvW[filter_dim][k][l] += _encImg[i + k][j + l] * cur_val;
 					}
 				}
@@ -861,31 +868,27 @@ void CNN::UpdateWeight()
 {
 	for (int i = 0; i < 120; i++) 
 	{	
-		_cipherTemp = _encDffB1[i];
-		_ckks.evaluateCipher(&_eta, "*", &_cipherTemp);
+		_cipherTemp = _eta;
+		_ckks.evaluateCipher(&_cipherTemp, "*", &_encDffB1[i]);
 		_ckks.evaluateCipher(&_encDenseB[i], "-", &_cipherTemp);
-		_encDenseB[i] = _cipherTemp;
 		// _encDenseB[i] -= eta * _encDffB1[i];
 
 		for (int j = 0; j < 10; j++) 
 		{	
-			_cipherTemp = _encDffB2[j];
-			_ckks.evaluateCipher(&_eta, "*", &_cipherTemp);
+			_cipherTemp = _eta;
+			_ckks.evaluateCipher(&_cipherTemp, "*", &_eta);
 			_ckks.evaluateCipher(&_encDenseB2[j], "-", &_cipherTemp);
-			_encDenseB2[j] = _cipherTemp;
 			//_encDenseB2[j] -= eta * _encDffB2[j];
-			_cipherTemp = _encDffW2[i][j];
-			_ckks.evaluateCipher(&_eta, "*", &_cipherTemp);
+			_cipherTemp = _eta;
+			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDffW2[i][j]);
 			_ckks.evaluateCipher(&_encDenseW2[i][j], "-", &_cipherTemp);
-			_encDenseW2[i][j] = _cipherTemp;
 			// _encDenseW2[i][j] -= eta * _encDffW2[i][j];
 		}
 		for (int k = 0; k < 1568; k++) 
 		{	
-			_cipherTemp = _encDffW1[k][i];
-			_ckks.evaluateCipher(&_eta, "*", &_cipherTemp);
+			_cipherTemp = _eta;
+			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDffW1[k][i]);
 			_ckks.evaluateCipher(&_encDenseW[k][i], "-", &_cipherTemp);
-			_encDenseW[k][i] = _cipherTemp;
 			// a -= b --> a = a - b
 			// _encDenseW[k][i] -= eta * _encDffW1[k][i];
 		}
@@ -897,10 +900,9 @@ void CNN::UpdateWeight()
 		{
 			for (int j = 0; j < 5; j++) 
 			{	
-				_cipherTemp = _encDffConvW[i][k][j];
-				_ckks.evaluateCipher(&_eta, "*", &_cipherTemp);
+				_cipherTemp = _eta;
+				_ckks.evaluateCipher(&_cipherTemp, "*", &_encDffConvW[i][k][j]);
 				_ckks.evaluateCipher(&_encConvW[i][k][j], "-", &_cipherTemp);
-				_encConvW[i][k][j] = _cipherTemp;
 				// _encConvW[i][k][j] -= eta * _encDffConvW[i][k][j];
 			}
 		}
@@ -908,10 +910,9 @@ void CNN::UpdateWeight()
 		{
 			for (int m = 0; m < 28; m++) 
 			{	
-				_cipherTemp = _encDffConvB[i][l][m];
-				_ckks.evaluateCipher(&_eta, "*", &_cipherTemp);
+				_cipherTemp = _eta;
+				_ckks.evaluateCipher(&_cipherTemp, "*", &_encDffConvB[i][l][m]);
 				_ckks.evaluateCipher(&_encConvB[i][l][m], "-", &_cipherTemp);
-				_encConvB[i][l][m] = _cipherTemp;
 				// _encConvB[i][l][m] -= eta * _encDffConvB[i][l][m];
 			}
 		}
@@ -925,8 +926,11 @@ void CNN::Train(int epochs)
 	auto startTime = chrono::high_resolution_clock::now();
 	int num = 0;
 	double Loss = 0;
+	cout << "Start Reading data... ";
 	ReadData();
+	cout << "done.\nStart EncryptWeight... ";
 	EncryptWeight();
+	cout << "done.\n";
 	for (int i = 0; i < epochs; i++) 
 	{
 		loss = 0;
@@ -1198,8 +1202,12 @@ int main()
 {
 	srand(time(NULL));
     CNN cnn;
+	cout << "Start initialization... \n";
 	cnn.Init();
+	cout << "Done.\nStart training... \n";
 	cnn.Train(100);
+	cout << "Done.\n Start predicting... \n";
 	cnn.Predict();
+	cout << "Done.\n";
     return 0;
 }

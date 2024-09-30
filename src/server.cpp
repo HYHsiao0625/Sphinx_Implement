@@ -233,7 +233,7 @@ int main()
     inet_aton(host, &my_addr.sin_addr);
     my_addr.sin_port = htons(port);
 
-    status = bind(sock_fd, (struct sockaddr *)&my_addr, sizeof(my_addr));
+    status = ::bind(sock_fd, (struct sockaddr *)&my_addr, sizeof(my_addr));
     if (status == -1) 
 	{
         perror("Binding error");

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <cstdio>
 #include "seal/seal.h"
 #include "../include/ckks.hpp"
 
@@ -15,19 +16,44 @@ void outfile(string fileName, T& source) {
 }
 
 int main() {
-    PublicKey publickey;
-    SecretKey secretkey;
+    PublicKey _publickey;
+    SecretKey _secretkey;
 
-    CKKS ckks;
+    CKKS _ckks;
     
-    ckks.generateKey(&publickey, &secretkey);
+    cout << "Initial encryption engine... ";
+    _ckks.initParams();
+    cout << "done.\nGenerate single-use keyset... ";
+    _ckks.generateKey(&_publickey, &_secretkey);
 
-    // Generate publickey.bin
-    outfile("publickey.bin", publickey);
-    cout << "publickey.bin generated." << endl;
-    // Generate secretkey.bin
-    outfile("secretkey.bin", secretkey);
-    cout << "secretkey.bin generated." << endl;
+    vector<string> _operand(2);
+    string _operator;
+    cout << "done.\nType 1st operand: ";
+    cin >> _operand[0];
+    cout << "Get: " << _operand[0] << "\nType operator (+, -, *, ^): ";
+    cin >> _operator;
+    cout << "Get: " << _operator << "\nType 2nd operand: ";
+    cin >> _operand[1];
+
+    vector<Ciphertext> _cipher(2);
+    cout << "Get: " << _operand[1] << "\nStart encrypting plaintext... ";
+    for (int i = 0; i < 2; i++)
+        _ckks.encryptPlain(stod(_operand[i]), _publickey, &_cipher[i]);
+    cout << "done.\nStart evaluating ciphertext... ";
+
+    double _res, plain[2];
+
+    for (int i = 0; i < 2; i++)
+        _ckks.decryptCipher(_cipher[i], _secretkey, &plain[i]);
+    
+    cout << "Decrypted Plaintext 1st: " << plain[0] << ", 2nd: " << plain[1] << endl;
+  
+
+    _ckks.evaluateCipher(&_cipher[0], _operator.c_str(), &_cipher[1]);
+    cout << "done.\nStart decrypting ciphertext... ";
+    _ckks.decryptCipher(_cipher[0], _secretkey, &_res);
+
+    cout << "done.\nThe result is: " << _res << " \n";
 
     return 0;
 }
