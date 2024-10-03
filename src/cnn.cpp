@@ -6,13 +6,9 @@
 #include <vector>
 #include <iomanip>
 #include <chrono>
-#include <ranges>
-#include "seal/seal.h"
-#include "../include/ckks.hpp"
 
 using namespace std;
 using namespace std::chrono;
-using namespace seal;
 
 class CNN
 {
@@ -23,66 +19,60 @@ private:
 	double eta;
 	int batch_size;
 	double loss;
+	int _t;
 
     /* MNIST Data */
-    vector<vector<int> > _dataTrain;
-    vector<vector<int> > _dataTest;
+    vector<vector<int>> _dataTrain;
+    vector<vector<int>> _dataTest;
     vector<int> _labelTrain;
     vector<int> _labelTest;
 
     /* Weight */
-    vector<vector<vector<double> > > _convW;
-    vector<vector<vector<double> > > _convB;
-	vector<vector<vector<double> > > _convLayer;
-	vector<vector<vector<double> > > _sigLayer;
-	vector<vector<vector<double> > > _maxPooling;
-	vector<vector<vector<double> > > _maxLayer;
+    vector<vector<vector<double>>> _convW;
+    vector<vector<vector<double>>> _convB;
+	vector<vector<vector<double>>> _convLayer;
+	vector<vector<vector<double>>> _sigLayer;
+	vector<vector<vector<double>>> _maxPooling;
+	vector<vector<vector<double>>> _maxLayer;
     vector<double> _denseInput;
-	vector<vector<double> > _denseW;
+	vector<vector<double>> _denseW;
 	vector<double> _denseB;
 	vector<double> _denseSum;
 	vector<double> _denseSigmoid;
-	vector<vector<double> > _denseW2;
+	vector<vector<double>> _denseW2;
 	vector<double> _denseB2;
 	vector<double> _denseSum2;
 	vector<double> _denseSoftmax;
 
-	/* Encrypt Params */
-	CKKS _ckks;
-	PublicKey _publickey;
-	SecretKey _secretkey;
-	Ciphertext _zero, _one, _eta, _cipherTemp;
-
     /* Encrypt Data */
-	vector<vector<Ciphertext> > _encImg;
-	vector<Ciphertext> _encLabel;
+	vector<vector<int>> _encImg;
+	vector<int> _encLabel;
 
 	/* Encrypt Weight */
-    vector<vector<vector<Ciphertext> > > _encConvW;
-	vector<vector<vector<Ciphertext> > > _encConvB;
-	vector<vector<vector<Ciphertext> > > _encConvLayer;
-	vector<vector<vector<Ciphertext> > > _encSigLayer;
-	vector<vector<vector<Ciphertext> > > _encMaxPooling;
-	vector<vector<vector<Ciphertext> > > _encMaxLayer;
+    vector<vector<vector<double>>> _encConvW;
+	vector<vector<vector<double>>> _encConvB;
+	vector<vector<vector<double>>> _encConvLayer;
+	vector<vector<vector<double>>> _encSigLayer;
+	vector<vector<vector<double>>> _encMaxPooling;
+	vector<vector<vector<double>>> _encMaxLayer;
 
-	vector<Ciphertext> _encDenseInput;
-	vector<vector<Ciphertext> > _encDenseW;
-	vector<Ciphertext> _encDenseB;
-	vector<Ciphertext> _encDenseSum;
-	vector<Ciphertext> _encDenseSigmoid;
-	vector<vector<Ciphertext> > _encDenseW2;
-	vector<Ciphertext> _encDenseB2;
-	vector<Ciphertext> _encDenseSum2;
-	vector<Ciphertext> _encDenseSoftmax;
+	vector<double> _encDenseInput;
+	vector<vector<double>> _encDenseW;
+	vector<double> _encDenseB;
+	vector<double> _encDenseSum;
+	vector<double> _encDenseSigmoid;
+	vector<vector<double>> _encDenseW2;
+	vector<double> _encDenseB2;
+	vector<double> _encDenseSum2;
+	vector<double> _encDenseSoftmax;
 
-	vector<vector<Ciphertext> > _encDffW2;
-	vector<Ciphertext> _encDffB2;
-	vector<vector<Ciphertext> > _encDffW1;
-	vector<Ciphertext> _encDffB1;
-	vector<vector<vector<Ciphertext> > > _encDffMaxW;
-	vector<vector<vector<Ciphertext> > > _encDffConvW;
-	vector<vector<vector<Ciphertext> > > _encDffConvB;
-
+	vector<vector<double>> _encDffW2;
+	vector<double> _encDffB2;
+	vector<vector<double>> _encDffW1;
+	vector<double> _encDffB1;
+	vector<vector<vector<double>>> _encDffMaxW;
+	vector<vector<vector<double>>> _encDffConvW;
+	vector<vector<vector<double>>> _encDffConvB;
 public:
     CNN(/* args */);
     ~CNN();
@@ -92,22 +82,25 @@ public:
 	double SoftmaxDen(vector<double> x, int len);
     void Train(int epochs);
     void ReadData();
-    void PrintImg(vector<vector<double> > img);
-    void InitializeWeight();
+    void PrintImg(vector<vector<double>> img);
+    void InitialiseWeight();
 	void WriteInitWeight();
-	
+
 	void EncryptWeight();
 	void DecryptWeight();
-	void GiveImg(vector<int> vec, vector<vector<int> >& img);
+	void GiveImg(vector<int> vec, vector<vector<int>>& img);
 	void GiveLabel(int y, vector<int>& vector_y);
 	int GivePrediction();
-	void EncryptData(vector<vector<int> >& img, vector<int>& label);
-	void EncryptForward(vector<vector<Ciphertext> >& _encImg);
-	void EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vector<vector<Ciphertext> >& _encImg);
+	void EncryptData(vector<vector<int>>& img, vector<int>& label);
+	void EncryptForward(vector<vector<int>>& _encImg);
+	void EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<int>>& _encImg);
 	void UpdateWeight();
 	void WriteTrainedWeight();
 	void Predict();
-	void Forward(vector<vector<int> >& img);
+	void Forward(vector<vector<int>>& img);
+
+	void AdamOptimizer(double _lr, double _b1, double _b2, double _eps);
+
 };
 
 CNN::CNN()
@@ -128,73 +121,64 @@ void CNN::Init()
 	eta = 0.01;
 	batch_size = 100;
 	loss = 0;
+	_t = 1;
 
 	/* Train & Test Data */
-	_dataTrain = vector<vector<int> >(60000, vector<int>(784, 0));
-    _dataTest = vector<vector<int> > (10000, vector<int>(784, 0));
+	_dataTrain = vector<vector<int>>(60000, vector<int>(784, 0));
+    _dataTest = vector<vector<int>> (10000, vector<int>(784, 0));
     _labelTrain = vector<int>(60000, 0);
     _labelTest = vector<int>(10000, 0);
 
     /* Weight */
-    _convW = vector<vector<vector<double> > >(8, vector<vector<double> >(5, vector<double>(5, 0)));
-    _convB = vector<vector<vector<double> > >(8, vector<vector<double> >(28, vector<double>(28, 0)));
-    _convLayer = vector<vector<vector<double> > >(8, vector<vector<double> >(28, vector<double>(28, 0)));
-	_sigLayer = vector<vector<vector<double> > >(8, vector<vector<double> >(28, vector<double>(28, 0)));
-	_maxPooling = vector<vector<vector<double> > >(8, vector<vector<double> >(28, vector<double>(28, 0)));
-	_maxLayer = vector<vector<vector<double> > >(8, vector<vector<double> >(28, vector<double>(28, 0)));
+    _convW = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
+    _convB = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+    _convLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_sigLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_maxPooling = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_maxLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
 	
 	_denseInput = vector<double>(1568, 0);
-	_denseW = vector<vector<double> >(1568, vector<double>(120, 0));
+	_denseW = vector<vector<double>>(1568, vector<double>(120, 0));
 	_denseB = vector<double>(120, 0);
 	_denseSum = vector<double>(120, 0);
 	_denseSigmoid = vector<double>(120, 0);
-	_denseW2 = vector<vector<double> >(120, vector<double>(10, 0));
+	_denseW2 = vector<vector<double>>(120, vector<double>(10, 0));
 	_denseB2 = vector<double>(10, 0);
 	_denseSum2 = vector<double>(10, 0);
 	_denseSoftmax = vector<double>(10, 0);
 
 	/* Encrypt Data */
-	_encImg = vector<vector<Ciphertext> >(32, vector<Ciphertext>(32));
-	_encLabel = vector<Ciphertext>(10);
+	_encImg = vector<vector<int>>(32, vector<int>(32, 0));
+	_encLabel = vector<int>(10, 0);
 
 	/* Encrypt Weight */
-	_encConvW = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(5, vector<Ciphertext>(5)));
-	_encConvB = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(28, vector<Ciphertext>(28)));
-	_encConvLayer = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(28, vector<Ciphertext>(28)));
-	_encSigLayer = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(28, vector<Ciphertext>(28)));
-	_encMaxPooling = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(28, vector<Ciphertext>(28)));
-	_encMaxLayer = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(14, vector<Ciphertext>(14)));
+	_encConvW = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
+	_encConvB = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_encConvLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_encSigLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_encMaxPooling = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_encMaxLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(14, vector<double>(14, 0)));
 
-	_encDenseInput = vector<Ciphertext>(1568);
-	_encDenseW = vector<vector<Ciphertext> >(1568, vector<Ciphertext>(120));
-	_encDenseB = vector<Ciphertext>(120);
-	_encDenseSum = vector<Ciphertext>(120);
-	_encDenseSigmoid = vector<Ciphertext>(120);
-	_encDenseW2 = vector<vector<Ciphertext> >(120, vector<Ciphertext>(10));
-	_encDenseB2 = vector<Ciphertext>(10);
-	_encDenseSum2 = vector<Ciphertext>(10);
-	_encDenseSoftmax = vector<Ciphertext>(10);
+	_encDenseInput = vector<double>(1568, 0);
+	_encDenseW = vector<vector<double>>(1568, vector<double>(120, 0));
+	_encDenseB = vector<double>(120, 0);
+	_encDenseSum = vector<double>(120, 0);
+	_encDenseSigmoid = vector<double>(120, 0);
+	_encDenseW2 = vector<vector<double>>(120, vector<double>(10, 0));
+	_encDenseB2 = vector<double>(10, 0);
+	_encDenseSum2 = vector<double>(10, 0);
+	_encDenseSoftmax = vector<double>(10, 0);
 
-	_encDffW2 = vector<vector<Ciphertext> >(120, vector<Ciphertext>(10));
-	_encDffB2 = vector<Ciphertext>(10);
-	_encDffW1 = vector<vector<Ciphertext> >(1568, vector<Ciphertext>(120));
-	_encDffB1 = vector<Ciphertext>(120);
-	_encDffMaxW = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(28, vector<Ciphertext>(28)));
-	_encDffConvW = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(5, vector<Ciphertext>(5)));
-	_encDffConvB = vector<vector<vector<Ciphertext> > >(8, vector<vector<Ciphertext> >(28, vector<Ciphertext>(28)));
+	_encDffW2 = vector<vector<double>>(120, vector<double>(10, 0));
+	_encDffB2 = vector<double>(10, 0);
+	_encDffW1 = vector<vector<double>>(1568, vector<double>(120, 0));
+	_encDffB1 = vector<double>(120, 0);
+	_encDffMaxW = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_encDffConvW = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
+	_encDffConvB = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
 
-	/* Generate Keyset */
-	_ckks.initParams();
-	_ckks.generateKey(&_publickey, &_secretkey);
-
-	/* Generate Based Number with Cipher*/
-	_ckks.encryptPlain(0, _publickey, &_zero);
-	_ckks.encryptPlain(1, _publickey, &_one);
-	_ckks.encryptPlain(eta, _publickey, &_eta);
-
-	InitializeWeight();
+	InitialiseWeight();
 	WriteInitWeight();
-
 }
 /* ************************************************************ */
 /* Helper functions */
@@ -225,13 +209,7 @@ void CNN::ReadData()
 {
     /* Read Train Data */
     ifstream csvread;
-	try {
-		csvread.open("../data/mnist_train.csv", ios::in);
-	}
-	catch (exception& e) {
-		cerr << "Failed to load mnist_train.csv" << e.what() << endl;
-	}
-    
+    csvread.open("../data/mnist_train.csv", ios::in);
     if (csvread) 
     {
         //Datei bis Ende einlesen und bei ';' strings trennen
@@ -301,7 +279,7 @@ void CNN::ReadData()
     }
 }
 
-void CNN::PrintImg(vector<vector<double> > _img)
+void CNN::PrintImg(vector<vector<double>> _img)
 {
     for(int i = 0; i < 14; i++)
     {
@@ -314,7 +292,7 @@ void CNN::PrintImg(vector<vector<double> > _img)
     cout << endl;
 }
 /* ************************************************************ */
-void CNN::InitializeWeight()
+void CNN::InitialiseWeight()
 {
 	for (int i = 0; i < 8; i++) 
 	{
@@ -456,64 +434,28 @@ void CNN::WriteInitWeight()
 }
 
 void CNN::EncryptWeight()
-{	
+{
 	/* Encrypt Weight */
-	// convW
-	for (size_t x = 0; x < _convW.size(); x++)
-		for (size_t y = 0; y < _convW[x].size(); y++)
-			for (size_t z = 0; z < _convW[x][y].size(); z++)
-				_ckks.encryptPlain(_convW[x][y][z], _publickey, &_encConvW[x][y][z]);
-	// convB
-	for (size_t x = 0; x < _convB.size(); x++)
-		for (size_t y = 0; y < _convB[x].size(); y++)
-			for (size_t z = 0; z < _convB[x][y].size(); z++)
-				_ckks.encryptPlain(_convB[x][y][z], _publickey, &_encConvB[x][y][z]);
-	// denseW
-	for (size_t x = 0; x < _denseW.size(); x++)
-		for (size_t y = 0; y < _denseW[x].size(); y++)
-				_ckks.encryptPlain(_denseW[x][y], _publickey, &_encDenseW[x][y]);
-	// denseB
-	for (size_t x = 0; x < _denseB.size(); x++)
-		_ckks.encryptPlain(_denseB[x], _publickey, &_encDenseB[x]);
-	// denseW2
-	for (size_t x = 0; x < _denseW2.size(); x++)
-		for (size_t y = 0; y < _denseW2[x].size(); y++)
-			_ckks.encryptPlain(_denseW2[x][y], _publickey, &_encDenseW2[x][y]);
-	// denseB2
-    for (size_t x = 0; x < _denseB2.size(); x++)
-		_ckks.encryptPlain(_denseB2[x], _publickey, &_encDenseB2[x]);
+	_encConvW = _convW;
+    _encConvB = _convB;
+    _encDenseW = _denseW;
+    _encDenseB = _denseB ;
+    _encDenseW2 = _denseW2;
+    _encDenseB2 = _denseB2;
 }
 
 void CNN::DecryptWeight()
 {
 	/* Decrypt Weight */
-	// convW
-	for (size_t x = 0; x < _convW.size(); x++)
-		for (size_t y = 0; y < _convW[x].size(); y++)
-			for (size_t z = 0; z < _convW[x][y].size(); z++)
-				_ckks.decryptCipher(_encConvW[x][y][z], _secretkey, &_convW[x][y][z]);
-	// convB
-	for (size_t x = 0; x < _convB.size(); x++)
-		for (size_t y = 0; y < _convB[x].size(); y++)
-			for (size_t z = 0; z < _convB[x][y].size(); z++)
-				_ckks.decryptCipher(_encConvB[x][y][z], _secretkey, &_convB[x][y][z]);
-	// denseW
-	for (size_t x = 0; x < _denseW.size(); x++)
-		for (size_t y = 0; y < _denseW[x].size(); y++)
-				_ckks.decryptCipher(_encDenseW[x][y], _secretkey, &_denseW[x][y]);
-	// denseB
-	for (size_t x = 0; x < _denseB.size(); x++)
-		_ckks.decryptCipher(_encDenseB[x], _secretkey, &_denseB[x]);
-	// denseW2
-	for (size_t x = 0; x < _denseW2.size(); x++)
-		for (size_t y = 0; y < _denseW2[x].size(); y++)
-			_ckks.decryptCipher(_encDenseW2[x][y], _secretkey, &_denseW2[x][y]);
-	// denseB2
-    for (size_t x = 0; x < _denseB2.size(); x++)
-		_ckks.decryptCipher(_encDenseB2[x], _secretkey, &_denseB2[x]);
+	_convW = _encConvW;
+    _convB = _encConvB;
+    _denseW = _encDenseW;
+    _denseB = _encDenseB;
+    _denseW2 = _encDenseW2;
+    _denseB2 = _encDenseB2;
 }
 
-void CNN::GiveImg(vector<int> vec, vector<vector<int> >& img) 
+void CNN::GiveImg(vector<int> vec, vector<vector<int>>& img) 
 {
 	int k = 0;
 	for (int i = 0; i < 32; i++) 
@@ -558,18 +500,14 @@ int CNN::GivePrediction()
 	return max_pos;
 }
 
-void CNN::EncryptData(vector<vector<int> >& img, vector<int>& label)
+void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
 {
 	/* Encrypt Data */
-	for (size_t x = 0; x < img.size(); x++)
-		for (size_t y = 0; y < img[x].size(); y++)
-			_ckks.encryptPlain(img[x][y], _publickey, &_encImg[x][y]);
-
-	for (size_t i = 0; i < label.size(); i++)
-		_ckks.encryptPlain(label[i], _publickey, &_encLabel[i]);
+	_encImg = img;
+	_encLabel = label;
 }
 
-void CNN::EncryptForward(vector<vector<Ciphertext> >& _encImg)
+void CNN::EncryptForward(vector<vector<int>>& _encImg)
 {
 	/* Convolution Operation + Sigmoid Activation */
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
@@ -578,34 +516,24 @@ void CNN::EncryptForward(vector<vector<Ciphertext> >& _encImg)
 		{
 			for (int j = 0; j < 28; j++) 
 			{
-				_encConvLayer[filter_dim][i][j] = _zero;
-				_encSigLayer[filter_dim][i][j] = _zero;
-				_encMaxPooling[filter_dim][i][j] = _zero;
+				_encConvLayer[filter_dim][i][j] = 0;
+				_encSigLayer[filter_dim][i][j] = 0;
+				_encMaxPooling[filter_dim][i][j] = 0;
 				for (int k = 0; k < filter_size; k++) 
 				{
-					for (int l = 0; l < filter_size; l++)
+					for (int l = 0; l < filter_size; l++) 
 					{
-						_cipherTemp = _encConvW[filter_dim][k][l];
-						_ckks.evaluateCipher(&_cipherTemp, "*", &_encImg[i + k][j + l]);
-						_encConvLayer[filter_dim][i][j] = _cipherTemp;
-						//_encConvLayer[filter_dim][i][j] = _encImg[i + k][j + l] * _encConvW[filter_dim][k][l];
+						_encConvLayer[filter_dim][i][j] = _encImg[i + k][j + l] * _encConvW[filter_dim][k][l];
 					}
 				}
-
-				// Need decrypt before sigmoid, but here's for encrypt, move later
-				vector<double> decrypted(3, 0);
-				_ckks.decryptCipher(_encConvLayer[filter_dim][i][j], _secretkey, &decrypted[0]);
-				_ckks.decryptCipher(_encConvB[filter_dim][i][j], _secretkey, &decrypted[1]);
-				decrypted[2] = Sigmoid(decrypted[0] + decrypted[1]); 
-				_ckks.encryptPlain(decrypted[2], _publickey, &_encSigLayer[filter_dim][i][j]);
+				_encSigLayer[filter_dim][i][j] = Sigmoid(_encConvLayer[filter_dim][i][j] + _encConvB[filter_dim][i][j]);
 			}
 		}
 		//PrintImg(_encSigLayer[filter_dim]);
 	}
 	
-	// Need decrypt before pooling, but here's for encrypt, move later
 	/* MAX Pooling (max_pooling, max_layer) */ 
-	double cur_max = 0, tmp;
+	double cur_max = 0;
 	int max_i = 0, max_j = 0;
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
@@ -615,25 +543,21 @@ void CNN::EncryptForward(vector<vector<Ciphertext> >& _encImg)
 			{
 				max_i = i;
 				max_j = j;
-				_ckks.decryptCipher(_encSigLayer[filter_dim][i][j], _secretkey, &cur_max);
-				// cur_max = _encSigLayer[filter_dim][i][j];
+				cur_max = _encSigLayer[filter_dim][i][j];
 				for (int k = 0; k < 2; k++) 
 				{
 					for (int l = 0; l < 2; l++) 
-					{	
-						_ckks.decryptCipher(_encSigLayer[filter_dim][i + k][j + l], _secretkey, &tmp);
-						if (tmp > cur_max)
+					{
+						if (_encSigLayer[filter_dim][i + k][j + l] > cur_max) 
 						{
 							max_i = i + k;
 							max_j = j + l;
-							_ckks.decryptCipher(_encSigLayer[filter_dim][max_i][max_j], _secretkey, &cur_max);
-							// cur_max = _encSigLayer[filter_dim][max_i][max_j];
+							cur_max = _encSigLayer[filter_dim][max_i][max_j];
 						}
 					}
 				}
-				_encMaxPooling[filter_dim][max_i][max_j] = _one;
-				_ckks.encryptPlain(cur_max, _publickey, &_encMaxLayer[filter_dim][i / 2][j / 2]);
-				// _encMaxLayer[filter_dim][i / 2][j / 2] = cur_max;
+				_encMaxPooling[filter_dim][max_i][max_j] = 1;
+				_encMaxLayer[filter_dim][i / 2][j / 2] = cur_max;
 			}
 		}
 	}
@@ -655,100 +579,64 @@ void CNN::EncryptForward(vector<vector<Ciphertext> >& _encImg)
 	/* Dense Layer1 Computing */
 	for (int i = 0; i < 120; i++) 
 	{
-		_encDenseSum[i] = _zero;
-		_encDenseSigmoid[i] = _zero;
+		_encDenseSum[i] = 0;
+		_encDenseSigmoid[i] = 0;
 		for (int j = 0; j < 1568; j++) 
-		{	
-			_cipherTemp = _encDenseInput[j];
-			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDenseW[j][i]);
-			_ckks.evaluateCipher(& _encDenseSum[i], "+", &_cipherTemp);
-			// _encDenseSum[i] += _encDenseW[j][i] * _encDenseInput[j];
+		{
+			_encDenseSum[i] += _encDenseW[j][i] * _encDenseInput[j];
 		}
-		_ckks.evaluateCipher(&_encDenseSum[i], "+", &_encDenseB[i]);
-		// _encDenseSum[i] += _encDenseB[i];
-		double res;
-		_ckks.decryptCipher(_encDenseSum[i], _secretkey, &res);
-		res = Sigmoid(res);
-		_ckks.encryptPlain(res, _publickey, &_encDenseSigmoid[i]);
-		// _encDenseSigmoid[i] = Sigmoid(_encDenseSum[i]);
+		_encDenseSum[i] += _encDenseB[i];
+		_encDenseSigmoid[i] = Sigmoid(_encDenseSum[i]);
 	}
 
 	/* Dense Layer2 Computing */
 	for (int i = 0; i < 10; i++) 
 	{
-		_encDenseSum2[i] = _zero;
-		for (int j = 0; j < 120; j++)
-		{	
-			_cipherTemp = _encDenseW2[j][i];
-			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDenseSigmoid[j]);
-			_ckks.evaluateCipher(&_encDenseSum2[i], "+", &_cipherTemp);
-			// _encDenseSum2[i] += _encDenseW2[j][i] * _encDenseSigmoid[j];
+		_encDenseSum2[i] = 0;
+		for (int j = 0; j < 120; j++) 
+		{
+			_encDenseSum2[i] += _encDenseW2[j][i] * _encDenseSigmoid[j];
 		}
-		_ckks.evaluateCipher(&_encDenseSum2[i], "+", &_encDenseB2[i]);
-		// _encDenseSum2[i] += _encDenseB2[i];
+		_encDenseSum2[i] += _encDenseB2[i];
 	}
 
-	/* Softmax Output */
-
-	vector<double> decrypted;
-
-	for (auto& i: _encDenseSum2) {
-		double tmp;
-		_ckks.decryptCipher(i, _secretkey, &tmp);
-		decrypted.push_back(tmp);
-	}
-
-	double den = SoftmaxDen(decrypted, 10);
-
-	for (int i = 0; i < decrypted.size(); i++) 
+	/* Softmax Output */ 
+	double den = SoftmaxDen(_encDenseSum2, 10);
+	for (int i = 0; i < 10; i++) 
 	{
-		_ckks.encryptPlain(exp(decrypted[i]) / den, _publickey, &_encDenseSoftmax[i]);
+		_encDenseSoftmax[i] = exp(_encDenseSum2[i]) / den;
 	}
 }
 
-void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vector<vector<Ciphertext> >& _encImg) 
+void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<int>>& _encImg) 
 {
-	vector<Ciphertext> _encDelta4;
+	double _encDelta4[10];
 	for (int i = 0; i < 10; i++) 
-	{	
-		_cipherTemp = y_hat[i];
-		_ckks.evaluateCipher(&_cipherTemp, "-", &y[i]);
-		_encDelta4[i] = _cipherTemp;
-		// _encDelta4[i] = y_hat[i] - y[i]; // Derivative of Softmax + Cross entropy
+	{
+		_encDelta4[i] = y_hat[i] - y[i]; // Derivative of Softmax + Cross entropy
 		_encDffB2[i] = _encDelta4[i]; // Bias Changes
-		double _abs;
-		_ckks.decryptCipher(_cipherTemp, _secretkey, &_abs);
-		loss += abs(_abs);
+		loss += abs(_encDelta4[i]);
 	}
 
 	// Calculate Weight Changes for Dense Layer 2
 	for (int i = 0; i < 120; i++) 
 	{
 		for (int j = 0; j < 10; j++) 
-		{	
-			_cipherTemp = _encDenseSigmoid[i];
-			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDelta4[j]);
-			_encDffW2[i][j] = _cipherTemp;
+		{
+			_encDffW2[i][j] = _encDenseSigmoid[i] * _encDelta4[j];
 		}
 	}
+
 	// Delta 3
-	vector<Ciphertext> _encDelta3;
+	double _encDelta3[120];
 	for (int i = 0; i < 120; i++) 
 	{
-		_encDelta3[i] = _zero;
+		_encDelta3[i] = 0;
 		for (int j = 0; j < 10; j++) 
-		{	
-			_cipherTemp = _encDenseW2[i][j];
-			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDelta4[j]);
-			_ckks.evaluateCipher(&_encDelta3[i], "+",&_cipherTemp);
-			// _encDelta3[i] += _encDenseW2[i][j] * _encDelta4[j];
+		{
+			_encDelta3[i] += _encDenseW2[i][j] * _encDelta4[j];
 		}
-		double decrypted;
-		_ckks.decryptCipher(_encDenseSum[i], _secretkey, &decrypted);
-		decrypted = DffSigmoid(decrypted);
-		_ckks.encryptPlain(decrypted, _publickey, &_cipherTemp);
-		_ckks.evaluateCipher(&_encDelta3[i], "*", &_cipherTemp);
-		// _encDelta3[i] *= DffSigmoid(decrypted);
+		_encDelta3[i] *= DffSigmoid(_encDenseSum[i]);
 	}
 
 	for (int i = 0; i < 120; i++)
@@ -760,33 +648,21 @@ void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vect
 	for (int i = 0; i < 1568; i++) 
 	{
 		for (int j = 0; j < 120; j++) 
-		{	
-			_cipherTemp = _encDenseInput[i];
-			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDelta3[j]);
-			_encDffW1[i][j] = _cipherTemp;
-			// _encDffW1[i][j] = _encDenseInput[i] * _encDelta3[j];
+		{
+			_encDffW1[i][j] = _encDenseInput[i] * _encDelta3[j];
 		}
 	}
 
 	// _encDelta2
-	vector<Ciphertext> _encDelta2;
+	double _encDelta2[1568];
 	for (int i = 0; i < 1568; i++) 
 	{
-		_encDelta2[i] = _zero;
+		_encDelta2[i] = 0;
 		for (int j = 0; j < 120; j++) 
-		{	
-			_cipherTemp = _encDenseW[i][j];
-			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDelta3[j]);
-			_ckks.evaluateCipher(&_encDelta2[i], "+", &_cipherTemp);
-			// _encDelta2[i] += _encDenseW[i][j] * _encDelta3[j];
+		{
+			_encDelta2[i] += _encDenseW[i][j] * _encDelta3[j];
 		}
-		
-		double decrypted;
-		_ckks.decryptCipher(_encDenseInput[i], _secretkey, &decrypted);
-		decrypted = DffSigmoid(decrypted);
-		_ckks.encryptPlain(decrypted, _publickey, &_cipherTemp);
-		_ckks.evaluateCipher(&_encDelta2[i], "*", &_cipherTemp);
-		// _encDelta2[i] *= DffSigmoid(_encDenseInput[i]);
+		_encDelta2[i] *= DffSigmoid(_encDenseInput[i]);
 	}
 
 	// Calc back-propagated max layer dw_max
@@ -800,16 +676,14 @@ void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vect
 				for (int l = 0; l < 2; l++) 
 				{
 					for (int m = 0; m < 2; m++) 
-					{	
-						double decrypted;
-						_ckks.decryptCipher(_encMaxPooling[filter_dim][i + l][j + m], _secretkey, &decrypted);
-						if (decrypted == 1) 
+					{
+						if (_encMaxPooling[filter_dim][i + l][j + m] == 1) 
 						{
 							_encDffMaxW[filter_dim][i][j] = _encDelta2[k];
 						}
 						else
 						{
-							_encDffMaxW[filter_dim][i][j] = _zero;
+							_encDffMaxW[filter_dim][i][j] = 0;
 						}
 					}
 				}
@@ -836,7 +710,7 @@ void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vect
 		{
 			for (int j = 0; j < 5; j++) 
 			{
-				_encDffConvW[filter_dim][i][j] = _zero;
+				_encDffConvW[filter_dim][i][j] = 0;
 			}
 		}
 	}
@@ -848,15 +722,12 @@ void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vect
 		{
 			for (int j = 0; j < 28; j++) 
 			{
-				Ciphertext cur_val = _encDffMaxW[filter_dim][i][j];
+				double cur_val = _encDffMaxW[filter_dim][i][j];
 				for (int k = 0; k < 5; k++) 
 				{
 					for (int l = 0; l < 5; l++) 
-					{	
-						_cipherTemp = _encImg[i + k][j + l];
-						_ckks.evaluateCipher(&_cipherTemp, "*", &cur_val);
-						_ckks.evaluateCipher(&_encDffConvW[filter_dim][k][l], "+", &_cipherTemp);
-						// _encDffConvW[filter_dim][k][l] += _encImg[i + k][j + l] * cur_val;
+					{
+						_encDffConvW[filter_dim][k][l] += _encImg[i + k][j + l] * cur_val;
 					}
 				}
 			}
@@ -867,30 +738,16 @@ void CNN::EncryptBackword(vector<Ciphertext>& y_hat, vector<Ciphertext>& y, vect
 void CNN::UpdateWeight()
 {
 	for (int i = 0; i < 120; i++) 
-	{	
-		_cipherTemp = _eta;
-		_ckks.evaluateCipher(&_cipherTemp, "*", &_encDffB1[i]);
-		_ckks.evaluateCipher(&_encDenseB[i], "-", &_cipherTemp);
-		// _encDenseB[i] -= eta * _encDffB1[i];
-
+	{
+		_encDenseB[i] -= eta * _encDffB1[i];
 		for (int j = 0; j < 10; j++) 
-		{	
-			_cipherTemp = _eta;
-			_ckks.evaluateCipher(&_cipherTemp, "*", &_eta);
-			_ckks.evaluateCipher(&_encDenseB2[j], "-", &_cipherTemp);
-			//_encDenseB2[j] -= eta * _encDffB2[j];
-			_cipherTemp = _eta;
-			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDffW2[i][j]);
-			_ckks.evaluateCipher(&_encDenseW2[i][j], "-", &_cipherTemp);
-			// _encDenseW2[i][j] -= eta * _encDffW2[i][j];
+		{
+			_encDenseB2[j] -= eta * _encDffB2[j];
+			_encDenseW2[i][j] -= eta * _encDffW2[i][j];
 		}
 		for (int k = 0; k < 1568; k++) 
-		{	
-			_cipherTemp = _eta;
-			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDffW1[k][i]);
-			_ckks.evaluateCipher(&_encDenseW[k][i], "-", &_cipherTemp);
-			// a -= b --> a = a - b
-			// _encDenseW[k][i] -= eta * _encDffW1[k][i];
+		{
+			_encDenseW[k][i] -= eta * _encDffW1[k][i];
 		}
 	}
 
@@ -899,21 +756,15 @@ void CNN::UpdateWeight()
 		for (int k = 0; k < 5; k++) 
 		{
 			for (int j = 0; j < 5; j++) 
-			{	
-				_cipherTemp = _eta;
-				_ckks.evaluateCipher(&_cipherTemp, "*", &_encDffConvW[i][k][j]);
-				_ckks.evaluateCipher(&_encConvW[i][k][j], "-", &_cipherTemp);
-				// _encConvW[i][k][j] -= eta * _encDffConvW[i][k][j];
+			{
+				_encConvW[i][k][j] -= eta * _encDffConvW[i][k][j];
 			}
 		}
 		for (int l = 0; l < 28; l++) 
 		{
 			for (int m = 0; m < 28; m++) 
-			{	
-				_cipherTemp = _eta;
-				_ckks.evaluateCipher(&_cipherTemp, "*", &_encDffConvB[i][l][m]);
-				_ckks.evaluateCipher(&_encConvB[i][l][m], "-", &_cipherTemp);
-				// _encConvB[i][l][m] -= eta * _encDffConvB[i][l][m];
+			{
+				_encConvB[i][l][m] -= eta * _encDffConvB[i][l][m];
 			}
 		}
 	}
@@ -926,26 +777,25 @@ void CNN::Train(int epochs)
 	auto startTime = chrono::high_resolution_clock::now();
 	int num = 0;
 	double Loss = 0;
-	cout << "Start Reading data... ";
 	ReadData();
-	cout << "done.\nStart EncryptWeight... ";
 	EncryptWeight();
-	cout << "done.\n";
 	for (int i = 0; i < epochs; i++) 
 	{
 		loss = 0;
+		_t = 1;
 		for (int j = 0; j < batch_size; j++)
 		{
 			cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " | Loss: " << fixed << Loss << " |" << flush;
 			num = rand() % 60000;
-			vector<vector<int> > img(32, vector<int>(32, 0));
+			vector<vector<int>> img(32, vector<int>(32, 0));
 			vector<int> label(10, 0);
 			GiveLabel(_labelTrain[num], label);
 			GiveImg(_dataTrain[num], img);
 			EncryptData(img, label);
 			EncryptForward(_encImg);
 			EncryptBackword(_encDenseSoftmax, _encLabel, _encImg);
-			UpdateWeight();
+			//UpdateWeight();
+			AdamOptimizer(0.01, 0.9, 0.999, 1e-8);
 		}
 		Loss = loss / batch_size;
 	}
@@ -1063,7 +913,7 @@ void CNN::WriteTrainedWeight()
 	_trainDenseB2.close();
 }
 
-void CNN::Forward(vector<vector<int> >& _img)
+void CNN::Forward(vector<vector<int>>& _img)
 {
 	/* Convolution Operation + Sigmoid Activation */
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
@@ -1173,7 +1023,7 @@ void CNN::Predict()
 	cout << "Start Testing." << endl;
 	for (int i = 0; i < val_len; i++) 
 	{
-		vector<vector<int> > img(32, vector<int>(32, 0));
+		vector<vector<int>> img(32, vector<int>(32, 0));
 		GiveImg(_dataTest[i], img);
 		Forward(img);
 		int pre = GivePrediction();
@@ -1198,16 +1048,98 @@ void CNN::Predict()
 	}
 }
 
-int main()
+void CNN::AdamOptimizer(double _lr, double _b1, double _b2, double _eps)
 {
+	vector<vector<vector<double>>> m3d;
+	vector<vector<vector<double>>> v3d;
+	vector<vector<double>> m2d;
+	vector<vector<double>> v2d;
+	vector<double> m1d(120, 0);
+	vector<double> v1d(120, 0);
+	double m_hat = 0;
+	double v_hat = 0;
+	for (int i = 0; i < 120; i++) 
+	{
+		m1d[i] = _b1 * _encDffB1[i] + (1 - _b1) * _encDffB1[i];
+		v1d[i] = _b2 * _encDffB1[i] + (1 - _b2) * _encDffB1[i] * _encDffB1[i];
+		m_hat = m1d[i] / (1 - pow(_b1, _t));
+		v_hat = v1d[i] / (1 - pow(_b2, _t));
+		_encDenseB[i] -= _lr * m_hat / (sqrt(abs(v_hat)) + _eps);
+	}
+	m2d = vector<vector<double>>(120, vector<double>(10, 0));
+	v2d = vector<vector<double>>(120, vector<double>(10, 0));
+	for (int i = 0; i < 120; i++) 
+	{
+		for (int j = 0; j < 10; j++) 
+		{
+			m1d[j] = _b1 * _encDffB2[j] + (1 - _b1) * _encDffB2[j];
+			v1d[j] = _b2 * _encDffB2[j] + (1 - _b2) * _encDffB2[j] * _encDffB2[j];
+			m_hat = m1d[j] / (1 - pow(_b1, _t));
+			v_hat = v1d[j] / (1 - pow(_b2, _t));
+			_encDenseB2[j] -= _lr * m_hat / (sqrt(abs(v_hat)) + _eps);
+
+			m2d[i][j] = _b1 * _encDffW2[i][j] + (1 - _b1) * _encDffW2[i][j];
+			v2d[i][j] = _b2 * _encDffW2[i][j] + (1 - _b2) * _encDffW2[i][j] * _encDffW2[i][j];
+			m_hat = m2d[i][j] / (1 - pow(_b1, _t));
+			v_hat = v2d[i][j] / (1 - pow(_b2, _t));
+			_encDenseW2[i][j] -= _lr * m_hat / (sqrt(abs(v_hat)) + _eps);
+		}
+	}
+	m2d = vector<vector<double>>(1568, vector<double>(120, 0));
+	v2d = vector<vector<double>>(1568, vector<double>(120, 0));
+	for (int i = 0; i < 120; i++) 
+	{
+		for (int k = 0; k < 1568; k++) 
+		{
+			m2d[k][i] = _b1 * _encDffW1[k][i] + (1 - _b1) * _encDffW1[k][i];
+			v2d[k][i] = _b2 * _encDffW1[k][i] + (1 - _b2) * _encDffW1[k][i] * _encDffW1[k][i];
+			m_hat = m2d[k][i] / (1 - pow(_b1, _t));
+			v_hat = v2d[k][i] / (1 - pow(_b2, _t));
+			_encDenseW[k][i] -= _lr * m_hat / (sqrt(abs(v_hat)) + _eps);
+		}
+	}
+	
+	m3d = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
+	v3d = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
+	for (int i = 0; i < 8; i++) 
+	{
+		for (int k = 0; k < 5; k++) 
+		{
+			for (int j = 0; j < 5; j++) 
+			{
+				m3d[i][k][j] = _b1 * _encDffConvW[i][k][j] + (1 - _b1) * _encDffConvW[i][k][j];
+				v3d[i][k][j] = _b2 * _encDffConvW[i][k][j] + (1 - _b2) * _encDffConvW[i][k][j] * _encDffConvW[i][k][j];
+				m_hat = m3d[i][k][j] / (1 - pow(_b1, _t));
+				v_hat = v3d[i][k][j] / (1 - pow(_b2, _t));
+				_encConvW[i][k][j] -= _lr * m_hat / (sqrt(abs(v_hat)) + _eps);
+			}
+		}
+	}
+	m3d = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	v3d = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	for (int i = 0; i < 8; i++) 
+	{
+		for (int l = 0; l < 28; l++) 
+		{
+			for (int m = 0; m < 28; m++) 
+			{
+				m3d[i][l][m] = _b1 * _encDffConvB[i][l][m] + (1 - _b1) * _encDffConvB[i][l][m];
+				v3d[i][l][m] = _b2 * _encDffConvB[i][l][m] + (1 - _b2) * _encDffConvB[i][l][m] * _encDffConvB[i][l][m];
+				m_hat = m3d[i][l][m] / (1 - pow(_b1, _t));
+				v_hat = v3d[i][l][m] / (1 - pow(_b2, _t));
+				_encConvB[i][l][m] -= _lr * m_hat / (sqrt(abs(v_hat)) + _eps);
+			}
+		}
+	}
+	_t++;
+}
+int main(int argc, char *argv[])
+{
+	int epoch = stoi(argv[1]);
 	srand(time(NULL));
     CNN cnn;
-	cout << "Start initialization... \n";
 	cnn.Init();
-	cout << "Done.\nStart training... \n";
-	cnn.Train(100);
-	cout << "Done.\n Start predicting... \n";
+	cnn.Train(epoch);
 	cnn.Predict();
-	cout << "Done.\n";
     return 0;
 }
