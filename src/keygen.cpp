@@ -25,35 +25,36 @@ int main() {
     _ckks.initParams();
     cout << "done.\nGenerate single-use keyset... ";
     _ckks.generateKey(&_publickey, &_secretkey);
+    cout << "done.\n";
 
-    vector<string> _operand(2);
-    string _operator;
-    cout << "done.\nType 1st operand: ";
-    cin >> _operand[0];
-    cout << "Get: " << _operand[0] << "\nType operator (+, -, *, ^): ";
-    cin >> _operator;
-    cout << "Get: " << _operator << "\nType 2nd operand: ";
-    cin >> _operand[1];
+    vector<vector<double> > num_array(32, vector<double>(32, 0));
+    vector<vector<Ciphertext> > cipher_array(32, vector<Ciphertext>(32));
 
-    vector<Ciphertext> _cipher(2);
-    cout << "Get: " << _operand[1] << "\nStart encrypting plaintext... ";
-    for (int i = 0; i < 2; i++)
-        _ckks.encryptPlain(stod(_operand[i]), _publickey, &_cipher[i]);
-    cout << "done.\nStart evaluating ciphertext... ";
+    for (int i = 0; i < 32; i++)
+        for (int j = 0; j < 32; j++)
+            num_array[i][j] = i * 32 + j + 1;
 
-    double _res, plain[2];
+    for (int i = 0; i < 32; i++)
+        for (int j = 0; j < 32; j++)
+            _ckks.encryptPlain(num_array[i][j], _publickey, &cipher_array[i][j]);
 
-    for (int i = 0; i < 2; i++)
-        _ckks.decryptCipher(_cipher[i], _secretkey, &plain[i]);
-    
-    cout << "Decrypted Plaintext 1st: " << plain[0] << ", 2nd: " << plain[1] << endl;
-  
+    Ciphertext divide10;
 
-    _ckks.evaluateCipher(&_cipher[0], _operator.c_str(), &_cipher[1]);
-    cout << "done.\nStart decrypting ciphertext... ";
-    _ckks.decryptCipher(_cipher[0], _secretkey, &_res);
+    _ckks.encryptPlain(0.01, _publickey, &divide10);
 
-    cout << "done.\nThe result is: " << _res << " \n";
+    for (int i = 0; i < 32; i++)
+        for (int j = 0; j < 32; j++)
+            _ckks.evaluateCipher(&cipher_array[i][j], "*", &divide10);
+
+    for (int i = 0; i < 32; i++)
+        for (int j = 0; j < 32; j++)
+            _ckks.decryptCipher(cipher_array[i][j], _secretkey, &num_array[i][j]);
+
+    for (int i = 0; i < 32; i++) {
+        for (int j = 0; j < 32; j++)
+            printf("%5.2f ", num_array[i][j]);
+        cout << endl;
+    }
 
     return 0;
 }

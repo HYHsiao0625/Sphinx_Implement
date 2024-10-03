@@ -7,8 +7,12 @@
 #include <iomanip>
 #include <chrono>
 
+#include "seal/seal.h"
+#include "../include/ckks.hpp"
+
 using namespace std;
 using namespace std::chrono;
+using namespace seal;
 
 class CNN
 {
@@ -44,8 +48,14 @@ private:
 	vector<double> _denseSum2;
 	vector<double> _denseSoftmax;
 
+	/* Encrypt Parameters */
+	CKKS _ckks;
+	Ciphertext _zero, _one, _eta, _cipherTemp;
+	PublicKey _publickey;
+	SecretKey _secretkey;
+
     /* Encrypt Data */
-	vector<vector<int>> _encImg;
+	vector<vector<Ciphertext>> _encImg;
 	vector<int> _encLabel;
 
 	/* Encrypt Weight */
@@ -92,8 +102,8 @@ public:
 	void GiveLabel(int y, vector<int>& vector_y);
 	int GivePrediction();
 	void EncryptData(vector<vector<int>>& img, vector<int>& label);
-	void EncryptForward(vector<vector<int>>& _encImg);
-	void EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<int>>& _encImg);
+	void EncryptForward(vector<vector<Ciphertext>>& _encImg);
+	void EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<Ciphertext>>& _encImg);
 	void UpdateWeight();
 	void WriteTrainedWeight();
 	void Predict();
@@ -147,8 +157,18 @@ void CNN::Init()
 	_denseSum2 = vector<double>(10, 0);
 	_denseSoftmax = vector<double>(10, 0);
 
+	/* Init Encryption Variables */
+	// Initial ckks
+	_ckks.initParams();
+	// Generate keyset
+	_ckks.generateKey(&_publickey, &_secretkey);
+	// Generate cipher variables for evaluation or initialization purposes.
+	_ckks.encryptPlain(0, _publickey, &_zero);
+	_ckks.encryptPlain(1, _publickey, &_one);
+	_ckks.encryptPlain(eta, _publickey, &_eta);
+
 	/* Encrypt Data */
-	_encImg = vector<vector<int>>(32, vector<int>(32, 0));
+	_encImg = vector<vector<Ciphertext>>(32, vector<Ciphertext>(32, _zero));
 	_encLabel = vector<int>(10, 0);
 
 	/* Encrypt Weight */
@@ -503,11 +523,19 @@ int CNN::GivePrediction()
 void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
 {
 	/* Encrypt Data */
-	_encImg = img;
+	// img
+	for (size_t x = 0; x < img.size(); x++)
+		for (size_t y = 0; y < img[x].size(); y++) {
+			cout << "\rEncrypting Image: " << x * img.size() + y + 1 << "/" << img.size() * img[0].size() << ": " << img[x][y] << flush;
+			_ckks.encryptPlain(img[x][y], _publickey, &_encImg[x][y]);
+		}
+	cout << endl;
+			
+	// label
 	_encLabel = label;
 }
 
-void CNN::EncryptForward(vector<vector<int>>& _encImg)
+void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
 {
 	/* Convolution Operation + Sigmoid Activation */
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
@@ -522,9 +550,13 @@ void CNN::EncryptForward(vector<vector<int>>& _encImg)
 				for (int k = 0; k < filter_size; k++) 
 				{
 					for (int l = 0; l < filter_size; l++) 
-					{
-						_encConvLayer[filter_dim][i][j] = _encImg[i + k][j + l] * _encConvW[filter_dim][k][l];
+					{	
+						double decrypted;
+						_ckks.decryptCipher(_encImg[i + k][j + l], _secretkey, &decrypted);
+						cout << "\rDecrypted _encImg[" << i + k << "][" << j + l << "] = " << decrypted << flush;
+						_encConvLayer[filter_dim][i][j] = decrypted * _encConvW[filter_dim][k][l];
 					}
+					// cout << endl;
 				}
 				_encSigLayer[filter_dim][i][j] = Sigmoid(_encConvLayer[filter_dim][i][j] + _encConvB[filter_dim][i][j]);
 			}
@@ -608,7 +640,7 @@ void CNN::EncryptForward(vector<vector<int>>& _encImg)
 	}
 }
 
-void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<int>>& _encImg) 
+void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<Ciphertext>>& _encImg) 
 {
 	double _encDelta4[10];
 	for (int i = 0; i < 10; i++) 
@@ -722,12 +754,16 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<i
 		{
 			for (int j = 0; j < 28; j++) 
 			{
-				double cur_val = _encDffMaxW[filter_dim][i][j];
+				Ciphertext cur_val;
+				_ckks.encryptPlain(_encDffMaxW[filter_dim][i][j], _publickey, &cur_val);
 				for (int k = 0; k < 5; k++) 
 				{
 					for (int l = 0; l < 5; l++) 
-					{
-						_encDffConvW[filter_dim][k][l] += _encImg[i + k][j + l] * cur_val;
+					{	
+						_ckks.evaluateCipher(&cur_val, "*", &_encImg[i + k][j + l]);
+						double decrypted;
+						_ckks.decryptCipher(cur_val, _secretkey, &decrypted);
+						_encDffConvW[filter_dim][k][l] += decrypted;
 					}
 				}
 			}
@@ -785,17 +821,23 @@ void CNN::Train(int epochs)
 		_t = 1;
 		for (int j = 0; j < batch_size; j++)
 		{
-			cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " | Loss: " << fixed << Loss << " |" << flush;
 			num = rand() % 60000;
 			vector<vector<int>> img(32, vector<int>(32, 0));
 			vector<int> label(10, 0);
+			cout << "GiveLabel\n";
 			GiveLabel(_labelTrain[num], label);
+			cout << "GiveImg\n";
 			GiveImg(_dataTrain[num], img);
+			cout << "EncryptData\n";
 			EncryptData(img, label);
+			cout << "EncryptForward\n";
 			EncryptForward(_encImg);
+			cout << "EncryptBackword\n";
 			EncryptBackword(_encDenseSoftmax, _encLabel, _encImg);
 			//UpdateWeight();
+			cout << "AdamOptimizer\n";
 			AdamOptimizer(0.01, 0.9, 0.999, 1e-8);
+			cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " | Loss: " << fixed << Loss << " |" << flush;
 		}
 		Loss = loss / batch_size;
 	}
@@ -1036,13 +1078,14 @@ void CNN::Predict()
 	float accu = double(cor) / val_len;
 	cout << "Accuracy: " << accu << endl;
 
-	cout << "   0 1 2 3 4 5 6 7 8 9" << endl;
+	cout << "    0  1  2  3  4  5  6  7  8  9" << endl;
 	for (int i = 0; i < 10; i++) 
 	{
 		cout << i << ": ";
 		for (int j = 0; j < 10; j++) 
 		{
-			cout << confusion_mat[i][j] << " ";
+			// cout << confusion_mat[i][j] << " ";
+			printf("%2d ", confusion_mat[i][j]);
 		}
 		cout << endl;
 	}
