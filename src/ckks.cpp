@@ -40,7 +40,7 @@ void CKKS::encryptPlain(const double plaintext, const PublicKey& publickey, Ciph
     SEALContext _context(_param);
     CKKSEncoder _codec(_context);
     Plaintext encoded;
-    _codec.encode(plaintext, pow(2, 40), encoded);
+    _codec.encode(static_cast<double>(plaintext), pow(2, 40), encoded);
     Encryptor encryptor(_context, publickey);
     encryptor.encrypt(encoded, *ciphertext);
 }
@@ -94,5 +94,5 @@ void CKKS::decryptCipher(const Ciphertext& ciphertext, const SecretKey& secretke
     vector<double> _result;
     _codec.decode(decoded, _result);
 
-    *result = _result[0];
+    *result = (fabs(_result[0]) < 1e-6) ? 0.0 :  _result[0];
 }

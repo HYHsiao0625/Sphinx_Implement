@@ -53,6 +53,7 @@ private:
 	Ciphertext _zero, _one, _eta, _cipherTemp;
 	PublicKey _publickey;
 	SecretKey _secretkey;
+	double _decrypted;
 
     /* Encrypt Data */
 	vector<vector<Ciphertext>> _encImg;
@@ -524,10 +525,20 @@ void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
 {
 	/* Encrypt Data */
 	// img
+
+	for (auto& i: img) {
+		for (auto& j: i)
+			printf("%3d ", j);
+		cout << endl;
+	}
+	
 	for (size_t x = 0; x < img.size(); x++)
 		for (size_t y = 0; y < img[x].size(); y++) {
-			cout << "\rEncrypting Image: " << x * img.size() + y + 1 << "/" << img.size() * img[0].size() << ": " << img[x][y] << flush;
-			_ckks.encryptPlain(img[x][y], _publickey, &_encImg[x][y]);
+			cout << "\rEncrypting Image: " << x * img.size() + y + 1 << "/" << img.size() * img[0].size() << " " << !img[x][y] << " : " << img[x][y] << flush;
+			if (!img[x][y])
+				_encImg[x][y] = _zero;
+			else
+				_ckks.encryptPlain(img[x][y], _publickey, &_encImg[x][y]);
 		}
 	cout << endl;
 			
@@ -537,6 +548,7 @@ void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
 
 void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
 {
+	cout << "Convolution with Sigmoid.\n";
 	/* Convolution Operation + Sigmoid Activation */
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
@@ -550,19 +562,22 @@ void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
 				for (int k = 0; k < filter_size; k++) 
 				{
 					for (int l = 0; l < filter_size; l++) 
-					{	
-						double decrypted;
-						_ckks.decryptCipher(_encImg[i + k][j + l], _secretkey, &decrypted);
-						cout << "\rDecrypted _encImg[" << i + k << "][" << j + l << "] = " << decrypted << flush;
-						_encConvLayer[filter_dim][i][j] = decrypted * _encConvW[filter_dim][k][l];
+					{
+						_ckks.encryptPlain(_encConvW[filter_dim][k][l], _publickey, &_cipherTemp);
+						_ckks.evaluateCipher(&_cipherTemp, "*", &_encImg[i + k][j + l]);
+						_ckks.decryptCipher(_cipherTemp, _secretkey, &_decrypted);
+						_encConvLayer[filter_dim][i][j] = _decrypted;
+						printf("\r%02i/%02i/%02i/%02i/%02i", l, k, j, i, filter_dim);
+						cout << flush;
 					}
-					// cout << endl;
 				}
 				_encSigLayer[filter_dim][i][j] = Sigmoid(_encConvLayer[filter_dim][i][j] + _encConvB[filter_dim][i][j]);
 			}
 		}
 		//PrintImg(_encSigLayer[filter_dim]);
 	}
+
+	cout << "\nMax Pooling.\n";
 	
 	/* MAX Pooling (max_pooling, max_layer) */ 
 	double cur_max = 0;
