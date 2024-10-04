@@ -6,6 +6,8 @@
 #include <vector>
 #include <iomanip>
 #include <chrono>
+#include <thread>
+#include <mutex>
 
 #include "seal/seal.h"
 #include "../include/ckks.hpp"
@@ -104,6 +106,7 @@ public:
 	int GivePrediction();
 	void EncryptData(vector<vector<int>>& img, vector<int>& label);
 	void EncryptForward(vector<vector<Ciphertext>>& _encImg);
+	void subTaskEncryptForward(int start, int end);
 	void EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<Ciphertext>>& _encImg);
 	void UpdateWeight();
 	void WriteTrainedWeight();
@@ -546,11 +549,11 @@ void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
 	_encLabel = label;
 }
 
-void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
-{
-	cout << "Convolution with Sigmoid.\n";
-	/* Convolution Operation + Sigmoid Activation */
-	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+void CNN::subTaskEncryptForward(int start, int end) {
+	Ciphertext localCipher;
+	double localDecrypted;
+
+	for (int filter_dim = start; filter_dim < end; filter_dim++) 
 	{
 		for (int i = 0; i < 28; i++) 
 		{
@@ -563,12 +566,12 @@ void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
 				{
 					for (int l = 0; l < filter_size; l++) 
 					{
-						_ckks.encryptPlain(_encConvW[filter_dim][k][l], _publickey, &_cipherTemp);
-						_ckks.evaluateCipher(&_cipherTemp, "*", &_encImg[i + k][j + l]);
-						_ckks.decryptCipher(_cipherTemp, _secretkey, &_decrypted);
-						_encConvLayer[filter_dim][i][j] = _decrypted;
-						printf("\r%02i/%02i/%02i/%02i/%02i", l, k, j, i, filter_dim);
-						cout << flush;
+						_ckks.encryptPlain(_encConvW[filter_dim][k][l], _publickey, &localCipher);
+						_ckks.evaluateCipher(&localCipher, "*", &_encImg[i + k][j + l]);
+						_ckks.decryptCipher(localCipher, _secretkey, &localDecrypted);
+						_encConvLayer[filter_dim][i][j] = localDecrypted;
+						// printf("\r%02i/%02i/%02i/%02i/%02i", l, k, j, i, filter_dim);
+						// cout << flush;
 					}
 				}
 				_encSigLayer[filter_dim][i][j] = Sigmoid(_encConvLayer[filter_dim][i][j] + _encConvB[filter_dim][i][j]);
@@ -576,8 +579,34 @@ void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
 		}
 		//PrintImg(_encSigLayer[filter_dim]);
 	}
+}
 
-	cout << "\nMax Pooling.\n";
+void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
+{
+	cout << "Convolution with Sigmoid.\n";
+
+	/* Seperate convolution with sigmoid to 8 parts. */
+	unsigned int threadsCount = min(8U, thread::hardware_concurrency());
+	printf("Physical Threads: %i, Allocated Threads: %i\n", thread::hardware_concurrency(), threadsCount);
+	
+    int tasksPerThread = 8 / threadsCount;
+    int remainingTasks = 8 % threadsCount;
+
+	vector<thread> threads;
+
+    int current_filter = 0;
+    for (unsigned int t = 0; t < threadsCount; ++t) {
+        int start = current_filter;
+        int end = start + tasksPerThread + (t < remainingTasks ? 1 : 0);
+        threads.emplace_back(&CNN::subTaskEncryptForward, this, start, end);
+        current_filter = end;
+    }
+
+    for (auto& th : threads)
+        th.join();
+	/* --------------------------------------------- */
+
+	cout << "Max Pooling.\n";
 	
 	/* MAX Pooling (max_pooling, max_layer) */ 
 	double cur_max = 0;
