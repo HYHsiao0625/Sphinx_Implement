@@ -586,7 +586,7 @@ void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
 	{
 		for (int i = 0; i < 28; i += 2) 
 		{
-			for (int j = 0; j < 28; j += 2) 
+			for (int j = 0; j < 28; j += 2)  
 			{
 				max_i = i;
 				max_j = j;
@@ -769,21 +769,21 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<C
 		{
 			for (int j = 0; j < 28; j++) 
 			{
-				Ciphertext cur_val;
-				_ckks.encryptPlain(_encDffMaxW[filter_dim][i][j], _publickey, &cur_val);
+				double cur_val = _encDffMaxW[filter_dim][i][j];
 				for (int k = 0; k < 5; k++) 
 				{
 					for (int l = 0; l < 5; l++) 
 					{	
-						_ckks.evaluateCipher(&cur_val, "*", &_encImg[i + k][j + l]);
-						double decrypted;
-						_ckks.decryptCipher(cur_val, _secretkey, &decrypted);
-						_encDffConvW[filter_dim][k][l] += decrypted;
+						_ckks.decryptCipher(_encImg[i + k][j + l], _secretkey, &_decrypted);
+						_encDffConvW[filter_dim][k][l] += _decrypted * cur_val;
+						printf("\r%02i/%02i/%02i/%02i/%02i", l, k, j, i, filter_dim);
+						cout << flush;
 					}
 				}
 			}
 		}
 	}
+	cout << endl;
 }
 
 void CNN::UpdateWeight()
