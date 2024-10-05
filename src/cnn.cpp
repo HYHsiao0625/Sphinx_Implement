@@ -7,7 +7,7 @@
 #include <iomanip>
 #include <chrono>
 #include <thread>
-#include <mutex>
+#include <cuda_runtime.h>
 
 #include "seal/seal.h"
 #include "../include/ckks.hpp"
@@ -108,6 +108,7 @@ public:
 	void EncryptForward(vector<vector<Ciphertext>>& _encImg);
 	void subTaskEncryptForward(int start, int end);
 	void EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<Ciphertext>>& _encImg);
+	void subTaskEncryptBackword(int start, int end);
 	void UpdateWeight();
 	void WriteTrainedWeight();
 	void Predict();
@@ -233,74 +234,71 @@ void CNN::ReadData()
 {
     /* Read Train Data */
     ifstream csvread;
-    csvread.open("../data/mnist_train.csv", ios::in);
-    if (csvread) 
-    {
-        //Datei bis Ende einlesen und bei ';' strings trennen
-        string s;
-        int data_pt = 0;
-        while (getline(csvread, s)) 
-        {
-            stringstream ss(s);
-            int pxl = 0;
-            while (ss.good()) 
-            {
-                string substr;
-                getline(ss, substr, ',');
-                if (pxl == 0) 
-                {
-                    _labelTrain[data_pt] = stoi(substr);
-                }
-                else 
-                {
-                    _dataTrain[data_pt][pxl - 1] = stoi(substr);
-                }
-                pxl++;
-            }
-            data_pt++;
-        }
-        csvread.close();
-    }
-    else 
-    {
-        //cerr << "Fehler beim Lesen!" << endl;
-        cerr << "Can not read data!" << endl;
-    }
+	try {
+		cout << "Reading mnist_train.csv\n";
+		csvread.open("../data/mnist_train.csv", ios::in);
+	}
+	catch (exception &e) {
+		cerr << "Failed to open file mnist_train.csv: " << e.what() << endl;
+		exit(1);
+	}
+
+	string s;
+	int data_pt = 0;
+	while (getline(csvread, s)) 
+	{
+		stringstream ss(s);
+		int pxl = 0;
+		while (ss.good()) 
+		{
+			string substr;
+			getline(ss, substr, ',');
+			if (pxl == 0) 
+			{
+				_labelTrain[data_pt] = stoi(substr);
+			}
+			else 
+			{
+				_dataTrain[data_pt][pxl - 1] = stoi(substr);
+			}
+			pxl++;
+		}
+		data_pt++;
+	}
+	csvread.close();
     
     /* Read Test Data */
-    csvread.open("../data/mnist_test.csv", ios::in);
-    if (csvread) 
-    {
-        //Datei bis Ende einlesen und bei ';' strings trennen
-        string s;
-        int data_pt = 0;
-        while (getline(csvread, s)) 
-        {
-            stringstream ss(s);
-            int pxl = 0;
-            while (ss.good()) 
-            {
-                string substr;
-                getline(ss, substr, ',');
-                if (pxl == 0) 
-                {
-                    _labelTest[data_pt] = stoi(substr);
-                }
-                else 
-                {
-                    _dataTest[data_pt][pxl - 1] = stoi(substr);
-                }
-                pxl++;
-            }
-            data_pt++;
-        }
-        csvread.close();
-    }
-    else 
-    {
-        //cerr << "Fehler beim Lesen!" << endl;
-        cerr << "Can not read data!" << endl;
-    }
+	try {
+		cout << "Reading mnist_test.csv\n";
+		csvread.open("../data/mnist_test.csv", ios::in);
+	}
+	catch (exception &e) {
+		cerr << "Failed to open file mnist_test.csv: " << e.what() << endl;
+		exit(1);
+	}
+
+	data_pt = 0;
+	while (getline(csvread, s)) 
+	{
+		stringstream ss(s);
+		int pxl = 0;
+		while (ss.good()) 
+		{
+			string substr;
+			getline(ss, substr, ',');
+			if (pxl == 0) 
+			{
+				_labelTest[data_pt] = stoi(substr);
+			}
+			else 
+			{
+				_dataTest[data_pt][pxl - 1] = stoi(substr);
+			}
+			pxl++;
+		}
+		data_pt++;
+	}
+	csvread.close();
 }
 
 void CNN::PrintImg(vector<vector<double>> _img)
@@ -550,6 +548,53 @@ void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
 }
 
 void CNN::subTaskEncryptForward(int start, int end) {
+
+	// Cuda Computing
+	/*
+	// Define local variables
+    double *d_encImg, *d_encConvW, *d_encConvLayer;
+    size_t img_size = 28 * 28 * sizeof(double);
+    size_t filter_size_bytes = filter_size * filter_size * sizeof(double);
+
+    // Allocate GPU memory for the image and convolution weights
+    cudaMalloc((void**)&d_encImg, img_size);
+    cudaMalloc((void**)&d_encConvW, filter_size_bytes);
+    cudaMalloc((void**)&d_encConvLayer, img_size);
+
+    for (int filter_dim = start; filter_dim < end; filter_dim++) {
+        // Transfer convolution weights to GPU
+        cudaMemcpy(d_encConvW, _encConvW[filter_dim], filter_size_bytes, cudaMemcpyHostToDevice);
+        
+        for (int i = 0; i < 28; i++) {
+            // Transfer the image to GPU memory
+            cudaMemcpy(d_encImg, _encImg[i], img_size, cudaMemcpyHostToDevice);
+
+            // Define CUDA grid and block sizes
+            dim3 threadsPerBlock(16, 16); // Adjust based on the image size
+            dim3 blocksPerGrid((28 + threadsPerBlock.x - 1) / threadsPerBlock.x, 
+                               (28 + threadsPerBlock.y - 1) / threadsPerBlock.y);
+
+            // Launch the CUDA kernel
+            convolutionKernel<<<blocksPerGrid, threadsPerBlock>>>(d_encImg, d_encConvW, d_encConvLayer, filter_dim, 28, 28, filter_size);
+            
+            // Transfer result back to host
+            cudaMemcpy(_encConvLayer[filter_dim][i], d_encConvLayer, img_size, cudaMemcpyDeviceToHost);
+        }
+        
+        // Perform Sigmoid activation on the host
+        for (int i = 0; i < 28; i++) {
+            for (int j = 0; j < 28; j++) {
+                _encSigLayer[filter_dim][i][j] = Sigmoid(_encConvLayer[filter_dim][i][j] + _encConvB[filter_dim][i][j]);
+            }
+        }
+    }
+
+    // Free GPU memory
+    cudaFree(d_encImg);
+    cudaFree(d_encConvW);
+    cudaFree(d_encConvLayer);
+	*/
+	
 	Ciphertext localCipher;
 	double localDecrypted;
 
@@ -566,12 +611,13 @@ void CNN::subTaskEncryptForward(int start, int end) {
 				{
 					for (int l = 0; l < filter_size; l++) 
 					{
-						_ckks.encryptPlain(_encConvW[filter_dim][k][l], _publickey, &localCipher);
-						_ckks.evaluateCipher(&localCipher, "*", &_encImg[i + k][j + l]);
-						_ckks.decryptCipher(localCipher, _secretkey, &localDecrypted);
-						_encConvLayer[filter_dim][i][j] = localDecrypted;
-						// printf("\r%02i/%02i/%02i/%02i/%02i", l, k, j, i, filter_dim);
-						// cout << flush;
+						_ckks.decryptCipher(_encImg[i + k][j + l], _secretkey, &localDecrypted);
+						// _ckks.encryptPlain(_encConvW[filter_dim][k][l], _publickey, &localCipher);
+						// _ckks.evaluateCipher(&localCipher, "*", &_encImg[i + k][j + l]);
+						// _ckks.decryptCipher(localCipher, _secretkey, &localDecrypted);
+						_encConvLayer[filter_dim][i][j] = localDecrypted * _encConvW[filter_dim][k][l];
+						printf("\r%02i/%02i/%02i/%02i/%02i", l, k, j, i, filter_dim);
+						cout << flush;
 					}
 				}
 				_encSigLayer[filter_dim][i][j] = Sigmoid(_encConvLayer[filter_dim][i][j] + _encConvB[filter_dim][i][j]);
@@ -579,13 +625,14 @@ void CNN::subTaskEncryptForward(int start, int end) {
 		}
 		//PrintImg(_encSigLayer[filter_dim]);
 	}
+	
 }
 
 void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
 {
-	cout << "Convolution with Sigmoid.\n";
+	cout << ">> Convolution with Sigmoid.\n";
 
-	/* Seperate convolution with sigmoid to 8 parts. */
+	/* Split convolution with sigmoid to 8 parts. */
 	unsigned int threadsCount = min(8U, thread::hardware_concurrency());
 	printf("Physical Threads: %i, Allocated Threads: %i\n", thread::hardware_concurrency(), threadsCount);
 	
@@ -606,7 +653,7 @@ void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
         th.join();
 	/* --------------------------------------------- */
 
-	cout << "Max Pooling.\n";
+	cout << ">> Max Pooling.\n";
 	
 	/* MAX Pooling (max_pooling, max_layer) */ 
 	double cur_max = 0;
@@ -681,6 +728,33 @@ void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
 	for (int i = 0; i < 10; i++) 
 	{
 		_encDenseSoftmax[i] = exp(_encDenseSum2[i]) / den;
+	}
+}
+
+void CNN::subTaskEncryptBackword(int start, int end) {
+
+	Ciphertext localCipher;
+	double localDecrypted;
+
+	for (int filter_dim = start; filter_dim < end; filter_dim++) 
+	{
+		for (int i = 0; i < 28; i++) 
+		{
+			for (int j = 0; j < 28; j++) 
+			{
+				double cur_val = _encDffMaxW[filter_dim][i][j];
+				for (int k = 0; k < 5; k++) 
+				{
+					for (int l = 0; l < 5; l++) 
+					{	
+						_ckks.decryptCipher(_encImg[i + k][j + l], _secretkey, &_decrypted);
+						_encDffConvW[filter_dim][k][l] += _decrypted * cur_val;
+						printf("\r%02i/%02i/%02i/%02i/%02i", l, k, j, i, filter_dim);
+						cout << flush;
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -791,27 +865,26 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<C
 		}
 	}
 
-	// Calculate Weight Changes for Conv Layer
-	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
-	{
-		for (int i = 0; i < 28; i++) 
-		{
-			for (int j = 0; j < 28; j++) 
-			{
-				double cur_val = _encDffMaxW[filter_dim][i][j];
-				for (int k = 0; k < 5; k++) 
-				{
-					for (int l = 0; l < 5; l++) 
-					{	
-						_ckks.decryptCipher(_encImg[i + k][j + l], _secretkey, &_decrypted);
-						_encDffConvW[filter_dim][k][l] += _decrypted * cur_val;
-						printf("\r%02i/%02i/%02i/%02i/%02i", l, k, j, i, filter_dim);
-						cout << flush;
-					}
-				}
-			}
-		}
-	}
+	/* Split "Calculate Weight Changes for Conv Layer" to 8 parts. */
+	unsigned int threadsCount = min(8U, thread::hardware_concurrency());
+	printf("Physical Threads: %i, Allocated Threads: %i\n", thread::hardware_concurrency(), threadsCount);
+	
+    int tasksPerThread = 8 / threadsCount;
+    int remainingTasks = 8 % threadsCount;
+
+	vector<thread> threads;
+
+    int current_filter = 0;
+    for (unsigned int t = 0; t < threadsCount; ++t) {
+        int start = current_filter;
+        int end = start + tasksPerThread + (t < remainingTasks ? 1 : 0);
+        threads.emplace_back(&CNN::subTaskEncryptBackword, this, start, end);
+        current_filter = end;
+    }
+
+    for (auto& th : threads)
+        th.join();
+	/* --------------------------------------------- */
 	cout << endl;
 }
 
