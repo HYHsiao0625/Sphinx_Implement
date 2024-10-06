@@ -169,29 +169,53 @@ src/ckks.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/keygen.dir/build.make CMakeFiles/keygen.dir/src/ckks.cpp.s
 .PHONY : src/ckks.cpp.s
 
-src/cnn.o: src/cnn.cpp.o
+src/cnn.o: src/cnn.cu.o
 .PHONY : src/cnn.o
 
 # target to build an object file
-src/cnn.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cnn.dir/build.make CMakeFiles/cnn.dir/src/cnn.cpp.o
-.PHONY : src/cnn.cpp.o
+src/cnn.cu.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cnn.dir/build.make CMakeFiles/cnn.dir/src/cnn.cu.o
+.PHONY : src/cnn.cu.o
 
-src/cnn.i: src/cnn.cpp.i
+src/cnn.i: src/cnn.cu.i
 .PHONY : src/cnn.i
 
 # target to preprocess a source file
-src/cnn.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cnn.dir/build.make CMakeFiles/cnn.dir/src/cnn.cpp.i
-.PHONY : src/cnn.cpp.i
+src/cnn.cu.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cnn.dir/build.make CMakeFiles/cnn.dir/src/cnn.cu.i
+.PHONY : src/cnn.cu.i
 
-src/cnn.s: src/cnn.cpp.s
+src/cnn.s: src/cnn.cu.s
 .PHONY : src/cnn.s
 
 # target to generate assembly for a file
-src/cnn.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cnn.dir/build.make CMakeFiles/cnn.dir/src/cnn.cpp.s
-.PHONY : src/cnn.cpp.s
+src/cnn.cu.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cnn.dir/build.make CMakeFiles/cnn.dir/src/cnn.cu.s
+.PHONY : src/cnn.cu.s
+
+src/cuda_kernels.o: src/cuda_kernels.cu.o
+.PHONY : src/cuda_kernels.o
+
+# target to build an object file
+src/cuda_kernels.cu.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cnn.dir/build.make CMakeFiles/cnn.dir/src/cuda_kernels.cu.o
+.PHONY : src/cuda_kernels.cu.o
+
+src/cuda_kernels.i: src/cuda_kernels.cu.i
+.PHONY : src/cuda_kernels.i
+
+# target to preprocess a source file
+src/cuda_kernels.cu.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cnn.dir/build.make CMakeFiles/cnn.dir/src/cuda_kernels.cu.i
+.PHONY : src/cuda_kernels.cu.i
+
+src/cuda_kernels.s: src/cuda_kernels.cu.s
+.PHONY : src/cuda_kernels.s
+
+# target to generate assembly for a file
+src/cuda_kernels.cu.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cnn.dir/build.make CMakeFiles/cnn.dir/src/cuda_kernels.cu.s
+.PHONY : src/cuda_kernels.cu.s
 
 src/keygen.o: src/keygen.cpp.o
 .PHONY : src/keygen.o
@@ -233,6 +257,9 @@ help:
 	@echo "... src/cnn.o"
 	@echo "... src/cnn.i"
 	@echo "... src/cnn.s"
+	@echo "... src/cuda_kernels.o"
+	@echo "... src/cuda_kernels.i"
+	@echo "... src/cuda_kernels.s"
 	@echo "... src/keygen.o"
 	@echo "... src/keygen.i"
 	@echo "... src/keygen.s"

@@ -83,12 +83,12 @@ clean: CMakeFiles/keygen.dir/clean
 CMakeFiles/cnn.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/cnn.dir/build.make CMakeFiles/cnn.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/cnn.dir/build.make CMakeFiles/cnn.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/huang/Sphinx_Implement/build/CMakeFiles --progress-num=1,2,3 "Built target cnn"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/huang/Sphinx_Implement/build/CMakeFiles --progress-num=1,2,3,4,5 "Built target cnn"
 .PHONY : CMakeFiles/cnn.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/cnn.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/huang/Sphinx_Implement/build/CMakeFiles 3
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/huang/Sphinx_Implement/build/CMakeFiles 5
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/cnn.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/huang/Sphinx_Implement/build/CMakeFiles 0
 .PHONY : CMakeFiles/cnn.dir/rule
@@ -109,7 +109,7 @@ CMakeFiles/cnn.dir/clean:
 CMakeFiles/keygen.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/keygen.dir/build.make CMakeFiles/keygen.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/keygen.dir/build.make CMakeFiles/keygen.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/huang/Sphinx_Implement/build/CMakeFiles --progress-num=4,5,6 "Built target keygen"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/huang/Sphinx_Implement/build/CMakeFiles --progress-num=6,7,8 "Built target keygen"
 .PHONY : CMakeFiles/keygen.dir/all
 
 # Build rule for subdir invocation for target.

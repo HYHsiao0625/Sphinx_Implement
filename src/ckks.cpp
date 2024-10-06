@@ -3,22 +3,12 @@
 #include <string>
 #include <iomanip>
 #include <vector>
-#include <seal/seal.h>
+
+#include "seal/seal.h"
+#include "../include/ckks.hpp"
 
 using namespace std;
 using namespace seal;
-
-class CKKS {
-    private:
-        EncryptionParameters _param;
-
-    public:
-        void initParams();
-        void generateKey(PublicKey* publickey, SecretKey* secretkey);
-        void encryptPlain(const double plaintext, const PublicKey& publickey, Ciphertext* ciphertext);
-        void evaluateCipher(Ciphertext* arg1, const char* specfied_operator, Ciphertext* arg2);
-        void decryptCipher(const Ciphertext& ciphertext, const SecretKey& secretkey, double* result);
-};
 
 // Initial parameters for ckks
 void CKKS::initParams() {
@@ -46,7 +36,7 @@ void CKKS::encryptPlain(const double plaintext, const PublicKey& publickey, Ciph
 }
 
 // Function for Handling Operations on Ciphertext
-void CKKS::evaluateCipher(Ciphertext* arg1, const char* specfied_operator, Ciphertext* arg2 = nullptr) {
+void CKKS::evaluateCipher(Ciphertext* arg1, const char* specfied_operator, Ciphertext* arg2) {
     const char *operators[] = {"+", "-", "*", "^"};
     SEALContext _context(_param);
     CKKSEncoder _codec(_context);

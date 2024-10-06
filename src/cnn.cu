@@ -11,6 +11,7 @@
 
 #include "seal/seal.h"
 #include "../include/ckks.hpp"
+#include "../include/cuda_kernels.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -550,7 +551,7 @@ void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
 void CNN::subTaskEncryptForward(int start, int end) {
 
 	// Cuda Computing
-	/*
+	
 	// Define local variables
     double *d_encImg, *d_encConvW, *d_encConvLayer;
     size_t img_size = 28 * 28 * sizeof(double);
@@ -563,14 +564,14 @@ void CNN::subTaskEncryptForward(int start, int end) {
 
     for (int filter_dim = start; filter_dim < end; filter_dim++) {
         // Transfer convolution weights to GPU
-        cudaMemcpy(d_encConvW, _encConvW[filter_dim], filter_size_bytes, cudaMemcpyHostToDevice);
+        cudaMemcpy(d_encConvW, _encConvW[filter_dim].data(), filter_size_bytes, cudaMemcpyHostToDevice);
         
         for (int i = 0; i < 28; i++) {
             // Transfer the image to GPU memory
-            cudaMemcpy(d_encImg, _encImg[i], img_size, cudaMemcpyHostToDevice);
+            cudaMemcpy(d_encImg, _encImg[i].data(), img_size, cudaMemcpyHostToDevice);
 
             // Define CUDA grid and block sizes
-            dim3 threadsPerBlock(16, 16); // Adjust based on the image size
+            dim3 threadsPerBlock(28, 28); // Adjust based on the image size
             dim3 blocksPerGrid((28 + threadsPerBlock.x - 1) / threadsPerBlock.x, 
                                (28 + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
@@ -578,7 +579,7 @@ void CNN::subTaskEncryptForward(int start, int end) {
             convolutionKernel<<<blocksPerGrid, threadsPerBlock>>>(d_encImg, d_encConvW, d_encConvLayer, filter_dim, 28, 28, filter_size);
             
             // Transfer result back to host
-            cudaMemcpy(_encConvLayer[filter_dim][i], d_encConvLayer, img_size, cudaMemcpyDeviceToHost);
+            cudaMemcpy(_encConvLayer[filter_dim][i].data(), d_encConvLayer, img_size, cudaMemcpyDeviceToHost);
         }
         
         // Perform Sigmoid activation on the host
@@ -593,8 +594,8 @@ void CNN::subTaskEncryptForward(int start, int end) {
     cudaFree(d_encImg);
     cudaFree(d_encConvW);
     cudaFree(d_encConvLayer);
-	*/
 	
+	/*
 	Ciphertext localCipher;
 	double localDecrypted;
 
@@ -625,7 +626,7 @@ void CNN::subTaskEncryptForward(int start, int end) {
 		}
 		//PrintImg(_encSigLayer[filter_dim]);
 	}
-	
+	*/	
 }
 
 void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
@@ -653,7 +654,7 @@ void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
         th.join();
 	/* --------------------------------------------- */
 
-	cout << ">> Max Pooling.\n";
+	cout << "\n>> Max Pooling.\n";
 	
 	/* MAX Pooling (max_pooling, max_layer) */ 
 	double cur_max = 0;

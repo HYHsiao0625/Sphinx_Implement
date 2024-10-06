@@ -5,6 +5,8 @@ project(cnn LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CUDA_STANDARD 11)
+set(CMAKE_CUDA_STANDARD_REQUIRED True)
 
 if(NOT DEFINED CMAKE_CUDA_ARCH)
     message(FATAL_ERROR "CMAKE_CUDA_ARCH is not set. Use: -DCMAKE_CUDA_ARCH=[KEPLER|MAXWELL|PASCAL|VOLTA|TURING|AMPERE].")
@@ -28,12 +30,12 @@ endif()
 
 # add_executable(cnn src/cnn.cpp src/ckks.cpp)
 # add_executable(keygen src/keygen.cpp src/ckks.cpp)
-add_executable(cnn src/cnn.cpp src/ckks.cpp)
+add_executable(cnn src/cnn.cu src/ckks.cpp src/cuda_kernels.cu)
 add_executable(keygen src/keygen.cpp src/ckks.cpp)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
-find_package(SEAL)
+find_package(SEAL REQUIRED)
 target_link_libraries(${PROJECT_NAME} SEAL::seal)
 target_link_libraries(keygen SEAL::seal)
 
