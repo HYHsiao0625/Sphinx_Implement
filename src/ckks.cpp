@@ -23,6 +23,24 @@ void CKKS::generateKey(PublicKey* publickey, SecretKey* secretkey) {
     KeyGenerator keygen(_context);
     keygen.create_public_key(*publickey);
     *secretkey = keygen.secret_key();
+    keygen.create_relin_keys(_relinkeys);
+}
+
+void CKKS::Encoder(const double source, Plaintext* result) {
+    SEALContext _context(_param);
+    CKKSEncoder _codec(_context);
+    Plaintext _result;
+    _codec.encode(source, pow(2, 40), _result);
+    result = &_result;
+}
+
+void CKKS::Decoder(const Plaintext source, double* result) {
+    SEALContext _context(_param);
+    CKKSEncoder _codec(_context);
+    vector<double> _result;
+    _codec.decode(source, _result);
+    _result[0] = (fabs(_result[0]) < 1e-6) ? 0.0 :  _result[0];
+    result = &_result[0];
 }
 
 // Function to Encrypt Plaintext with Publickey
@@ -30,6 +48,7 @@ void CKKS::encryptPlain(const double plaintext, const PublicKey& publickey, Ciph
     SEALContext _context(_param);
     CKKSEncoder _codec(_context);
     Plaintext encoded;
+    // Encoder(plaintext, &encoded);
     _codec.encode(static_cast<double>(plaintext), pow(2, 40), encoded);
     Encryptor encryptor(_context, publickey);
     encryptor.encrypt(encoded, *ciphertext);
@@ -60,10 +79,45 @@ void CKKS::evaluateCipher(Ciphertext* arg1, const char* specfied_operator, Ciphe
         }
         case 2: {
             evaluator.multiply_inplace(*arg1, *arg2);
+            evaluator.relinearize_inplace(*arg1, _relinkeys);
             break;
         }
         case 3: {
             evaluator.square_inplace(*arg1);
+            evaluator.relinearize_inplace(*arg1, _relinkeys);
+            break;
+        }
+        default: {
+            cerr << "Invalid operator" << endl;
+            break;
+        }
+    }
+}
+
+void CKKS::evaluatePlain(Ciphertext* arg1, const char* specfied_operator, const Plaintext* arg2) {
+    const char *operators[] = {"+", "-", "*"};
+    SEALContext _context(_param);
+    CKKSEncoder _codec(_context);
+    Evaluator evaluator(_context);
+    int index = -1;
+    for (int i = 0; i < 4; i++) {
+        if (!strcmp(specfied_operator, operators[i])) {
+            index = i;
+            break;
+        }
+    }
+
+    switch (index) {
+        case 0: {
+            evaluator.add_plain_inplace(*arg1, *arg2);
+            break;
+        }
+        case 1: {
+            evaluator.sub_plain_inplace(*arg1, *arg2);
+            break;
+        }
+        case 2: {
+            evaluator.multiply_plain_inplace(*arg1, *arg2);
             break;
         }
         default: {

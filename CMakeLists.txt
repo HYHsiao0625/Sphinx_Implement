@@ -30,7 +30,7 @@ endif()
 
 # add_executable(cnn src/cnn.cpp src/ckks.cpp)
 # add_executable(keygen src/keygen.cpp src/ckks.cpp)
-add_executable(cnn src/cnn.cu src/ckks.cpp src/cuda_kernels.cu)
+add_executable(cnn src/cnn.cpp src/ckks.cpp src/cuda_kernels.cu)
 add_executable(keygen src/keygen.cpp src/ckks.cpp)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/src)
