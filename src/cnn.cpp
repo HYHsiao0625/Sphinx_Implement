@@ -7,7 +7,7 @@
 #include <iomanip>
 #include <chrono>
 #include <thread>
-#include <cuda_runtime.h>
+// #include <cuda_runtime.h>
 
 #include "seal/seal.h"
 #include "../include/ckks.hpp"
