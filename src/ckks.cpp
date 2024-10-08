@@ -14,7 +14,7 @@ using namespace seal;
 void CKKS::initParams() {
     _param = EncryptionParameters(scheme_type::ckks);
     _param.set_poly_modulus_degree(8192);
-    _param.set_coeff_modulus(CoeffModulus::Create(8192, {60, 40, 40, 60}));
+    _param.set_coeff_modulus(CoeffModulus::Create(8192, {40, 30, 30, 30}));
 }
 
 // Function to Generate a Pair of Keys for Encrypt & Decrypt
@@ -29,9 +29,7 @@ void CKKS::generateKey(PublicKey* publickey, SecretKey* secretkey) {
 void CKKS::Encoder(const double source, Plaintext* result) {
     SEALContext _context(_param);
     CKKSEncoder _codec(_context);
-    Plaintext _result;
-    _codec.encode(source, pow(2, 40), _result);
-    result = &_result;
+    _codec.encode(source, pow(2, 30), *result);
 }
 
 void CKKS::Decoder(const Plaintext source, double* result) {
@@ -39,17 +37,14 @@ void CKKS::Decoder(const Plaintext source, double* result) {
     CKKSEncoder _codec(_context);
     vector<double> _result;
     _codec.decode(source, _result);
-    _result[0] = (fabs(_result[0]) < 1e-6) ? 0.0 :  _result[0];
-    result = &_result[0];
+    *result = (fabs(_result[0]) < 1e-6) ? 0.0 :  _result[0];
 }
 
 // Function to Encrypt Plaintext with Publickey
 void CKKS::encryptPlain(const double plaintext, const PublicKey& publickey, Ciphertext* ciphertext) {
     SEALContext _context(_param);
-    CKKSEncoder _codec(_context);
     Plaintext encoded;
-    // Encoder(plaintext, &encoded);
-    _codec.encode(static_cast<double>(plaintext), pow(2, 40), encoded);
+    Encoder(plaintext, &encoded);
     Encryptor encryptor(_context, publickey);
     encryptor.encrypt(encoded, *ciphertext);
 }
@@ -58,7 +53,6 @@ void CKKS::encryptPlain(const double plaintext, const PublicKey& publickey, Ciph
 void CKKS::evaluateCipher(Ciphertext* arg1, const char* specfied_operator, Ciphertext* arg2) {
     const char *operators[] = {"+", "-", "*", "^"};
     SEALContext _context(_param);
-    CKKSEncoder _codec(_context);
     Evaluator evaluator(_context);
     int index = -1;
     for (int i = 0; i < 4; i++) {
@@ -97,10 +91,9 @@ void CKKS::evaluateCipher(Ciphertext* arg1, const char* specfied_operator, Ciphe
 void CKKS::evaluatePlain(Ciphertext* arg1, const char* specfied_operator, const Plaintext* arg2) {
     const char *operators[] = {"+", "-", "*"};
     SEALContext _context(_param);
-    CKKSEncoder _codec(_context);
     Evaluator evaluator(_context);
     int index = -1;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 3; i++) {
         if (!strcmp(specfied_operator, operators[i])) {
             index = i;
             break;
@@ -130,13 +123,8 @@ void CKKS::evaluatePlain(Ciphertext* arg1, const char* specfied_operator, const 
 // Function for Decrypting Ciphertext with SecretKey
 void CKKS::decryptCipher(const Ciphertext& ciphertext, const SecretKey& secretkey, double* result) {
     SEALContext _context(_param);
-    CKKSEncoder _codec(_context);
     Decryptor decryptor(_context, secretkey);
-    Plaintext decoded;
-    decryptor.decrypt(ciphertext, decoded);
-    
-    vector<double> _result;
-    _codec.decode(decoded, _result);
-
-    *result = (fabs(_result[0]) < 1e-6) ? 0.0 :  _result[0];
+    Plaintext un_decode;
+    decryptor.decrypt(ciphertext, un_decode);
+    Decoder(un_decode, result);
 }
