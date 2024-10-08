@@ -7,7 +7,6 @@
 #include <iomanip>
 #include <chrono>
 #include <thread>
-// #include <cuda_runtime.h>
 
 #include "seal/seal.h"
 #include "../include/ckks.hpp"
@@ -56,6 +55,7 @@ private:
 	PublicKey _publickey;
 	SecretKey _secretkey;
 	double _decrypted;
+	unsigned int threadsCount;
 
     /* Encrypt Data */
 	vector<vector<Ciphertext>> _encImg;
@@ -171,6 +171,8 @@ void CNN::Init()
 	_ckks.encryptPlain(0, _publickey, &_zero);
 	_ckks.encryptPlain(1, _publickey, &_one);
 	_ckks.encryptPlain(eta, _publickey, &_eta);
+	// Allocate threads use be used later
+	threadsCount = min(8U, thread::hardware_concurrency());
 
 	/* Encrypt Data */
 	_encImg = vector<vector<Ciphertext>>(32, vector<Ciphertext>(32, _zero));
@@ -525,17 +527,10 @@ int CNN::GivePrediction()
 void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
 {
 	/* Encrypt Data */
-	// img
-
-	for (auto& i: img) {
-		for (auto& j: i)
-			printf("%3d ", j);
-		cout << endl;
-	}
-	
+	// img	
 	for (size_t x = 0; x < img.size(); x++)
 		for (size_t y = 0; y < img[x].size(); y++) {
-			cout << "\rEncrypting Image: " << x * img.size() + y + 1 << "/" << img.size() * img[0].size() << " " << !img[x][y] << " : " << img[x][y] << flush;
+			cout << "\rEncrypting Image: " << x * img.size() + y + 1 << "/" << img.size() * img[0].size() << flush;
 			if (!img[x][y])
 				_encImg[x][y] = _zero;
 			else
@@ -548,53 +543,6 @@ void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
 }
 
 void CNN::subTaskEncryptForward(int start, int end) {
-
-	// Cuda Computing
-	/*
-	// Define local variables
-    double *d_encImg, *d_encConvW, *d_encConvLayer;
-    size_t img_size = 28 * 28 * sizeof(double);
-    size_t filter_size_bytes = filter_size * filter_size * sizeof(double);
-
-    // Allocate GPU memory for the image and convolution weights
-    cudaMalloc((void**)&d_encImg, img_size);
-    cudaMalloc((void**)&d_encConvW, filter_size_bytes);
-    cudaMalloc((void**)&d_encConvLayer, img_size);
-
-    for (int filter_dim = start; filter_dim < end; filter_dim++) {
-        // Transfer convolution weights to GPU
-        cudaMemcpy(d_encConvW, _encConvW[filter_dim], filter_size_bytes, cudaMemcpyHostToDevice);
-        
-        for (int i = 0; i < 28; i++) {
-            // Transfer the image to GPU memory
-            cudaMemcpy(d_encImg, _encImg[i], img_size, cudaMemcpyHostToDevice);
-
-            // Define CUDA grid and block sizes
-            dim3 threadsPerBlock(16, 16); // Adjust based on the image size
-            dim3 blocksPerGrid((28 + threadsPerBlock.x - 1) / threadsPerBlock.x, 
-                               (28 + threadsPerBlock.y - 1) / threadsPerBlock.y);
-
-            // Launch the CUDA kernel
-            convolutionKernel<<<blocksPerGrid, threadsPerBlock>>>(d_encImg, d_encConvW, d_encConvLayer, filter_dim, 28, 28, filter_size);
-            
-            // Transfer result back to host
-            cudaMemcpy(_encConvLayer[filter_dim][i], d_encConvLayer, img_size, cudaMemcpyDeviceToHost);
-        }
-        
-        // Perform Sigmoid activation on the host
-        for (int i = 0; i < 28; i++) {
-            for (int j = 0; j < 28; j++) {
-                _encSigLayer[filter_dim][i][j] = Sigmoid(_encConvLayer[filter_dim][i][j] + _encConvB[filter_dim][i][j]);
-            }
-        }
-    }
-
-    // Free GPU memory
-    cudaFree(d_encImg);
-    cudaFree(d_encConvW);
-    cudaFree(d_encConvLayer);
-	*/
-	
 	Ciphertext localCipher;
 	double localDecrypted;
 
@@ -630,12 +578,8 @@ void CNN::subTaskEncryptForward(int start, int end) {
 
 void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
 {
-	cout << ">> Convolution with Sigmoid.\n";
 
-	/* Split convolution with sigmoid to 8 parts. */
-	unsigned int threadsCount = min(8U, thread::hardware_concurrency());
-	printf("Physical Threads: %i, Allocated Threads: %i\n", thread::hardware_concurrency(), threadsCount);
-	
+	/* Split convolution with sigmoid to 8 parts. */	
     int tasksPerThread = 8 / threadsCount;
     int remainingTasks = 8 % threadsCount;
 
@@ -653,7 +597,7 @@ void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
         th.join();
 	/* --------------------------------------------- */
 
-	cout << ">> Max Pooling.\n";
+	cout << endl;
 	
 	/* MAX Pooling (max_pooling, max_layer) */ 
 	double cur_max = 0;
@@ -866,9 +810,6 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<C
 	}
 
 	/* Split "Calculate Weight Changes for Conv Layer" to 8 parts. */
-	unsigned int threadsCount = min(8U, thread::hardware_concurrency());
-	printf("Physical Threads: %i, Allocated Threads: %i\n", thread::hardware_concurrency(), threadsCount);
-	
     int tasksPerThread = 8 / threadsCount;
     int remainingTasks = 8 % threadsCount;
 

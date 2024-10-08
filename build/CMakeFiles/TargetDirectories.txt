@@ -1,4 +1,4 @@
-/home/huang/Sphinx_Implement/build/CMakeFiles/cnn.dir
-/home/huang/Sphinx_Implement/build/CMakeFiles/keygen.dir
-/home/huang/Sphinx_Implement/build/CMakeFiles/edit_cache.dir
-/home/huang/Sphinx_Implement/build/CMakeFiles/rebuild_cache.dir
+/Users/huangzhixun/Desktop/Sphinx_Implement/build/CMakeFiles/cnn.dir
+/Users/huangzhixun/Desktop/Sphinx_Implement/build/CMakeFiles/keygen.dir
+/Users/huangzhixun/Desktop/Sphinx_Implement/build/CMakeFiles/edit_cache.dir
+/Users/huangzhixun/Desktop/Sphinx_Implement/build/CMakeFiles/rebuild_cache.dir

@@ -1,6 +1,6 @@
 #include <cuda_runtime.h>
 
-#include "../include/cuda_kernels.hpp"
+#include "../include/cuda_kernels.h"
 
 __global__ void convolutionKernel(double *encImg, double *encConvW, double *encConvLayer, int filter_dim, int img_rows, int img_cols, int filter_size) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
