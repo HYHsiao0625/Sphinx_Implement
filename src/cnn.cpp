@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <chrono>
 #include <thread>
+#include <omp.h>
 
 #include "seal/seal.h"
 #include "../include/ckks.hpp"
@@ -173,6 +174,7 @@ void CNN::Init()
 	_ckks.encryptPlain(eta, _publickey, &_eta);
 	// Allocate threads use be used later
 	threadsCount = min(8U, thread::hardware_concurrency());
+	omp_set_num_threads(thread::hardware_concurrency() - 8U);
 
 	/* Encrypt Data */
 	_encImg = vector<vector<Ciphertext>>(32, vector<Ciphertext>(32, _zero));
@@ -527,16 +529,16 @@ int CNN::GivePrediction()
 void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
 {
 	/* Encrypt Data */
-	// img	
+	// img
+	#pragma omp parallel for
 	for (size_t x = 0; x < img.size(); x++)
 		for (size_t y = 0; y < img[x].size(); y++) {
-			cout << "\rEncrypting Image: " << x * img.size() + y + 1 << "/" << img.size() * img[0].size() << flush;
+			// cout << "\rEncrypting Image: " << x * img.size() + y + 1 << "/" << img.size() * img[0].size() << flush;
 			if (!img[x][y])
 				_encImg[x][y] = _zero;
 			else
 				_ckks.encryptPlain(img[x][y], _publickey, &_encImg[x][y]);
 		}
-	cout << endl;
 			
 	// label
 	_encLabel = label;
@@ -547,9 +549,11 @@ void CNN::subTaskEncryptForward(int start, int end) {
 	double localDecrypted;
 
 	for (int filter_dim = start; filter_dim < end; filter_dim++) 
-	{
+	{	
+		#pragma omp parallel for
 		for (int i = 0; i < 28; i++) 
-		{
+		{	
+			#pragma omp parallel for
 			for (int j = 0; j < 28; j++) 
 			{
 				_encConvLayer[filter_dim][i][j] = 0;
@@ -809,7 +813,7 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<C
 		}
 	}
 
-	/* Split "Calculate Weight Changes for Conv Layer" to 8 parts. */
+	/* Split "Calculate Weight Changes for Conv Layer" to 8 parts. 
     int tasksPerThread = 8 / threadsCount;
     int remainingTasks = 8 % threadsCount;
 
@@ -825,8 +829,28 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<C
 
     for (auto& th : threads)
         th.join();
-	/* --------------------------------------------- */
-	cout << endl;
+	--------------------------------------------- */
+	#pragma omp parallel for
+	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
+	{
+		for (int i = 0; i < 28; i++) 
+		{
+			for (int j = 0; j < 28; j++) 
+			{
+				double cur_val = _encDffMaxW[filter_dim][i][j];
+				for (int k = 0; k < 5; k++) 
+				{
+					for (int l = 0; l < 5; l++) 
+					{	
+						_ckks.decryptCipher(_encImg[i + k][j + l], _secretkey, &_decrypted);
+						_encDffConvW[filter_dim][k][l] += _decrypted * cur_val;
+						printf("\r%02i/%02i/%02i/%02i/%02i", l, k, j, i, filter_dim);
+						cout << flush;
+					}
+				}
+			}
+		}
+	}
 }
 
 void CNN::UpdateWeight()

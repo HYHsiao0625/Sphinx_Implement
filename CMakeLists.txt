@@ -1,44 +1,49 @@
 cmake_minimum_required(VERSION 3.12)
 
-# project(cnn)
 project(cnn LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+# Uncomment this section if you plan to use CUDA
 # set(CMAKE_CUDA_STANDARD 11)
 # set(CMAKE_CUDA_STANDARD_REQUIRED True)
 
+# CUDA Architecture Setup
 # if(NOT DEFINED CMAKE_CUDA_ARCH)
 #    message(FATAL_ERROR "CMAKE_CUDA_ARCH is not set. Use: -DCMAKE_CUDA_ARCH=[KEPLER|MAXWELL|PASCAL|VOLTA|TURING|AMPERE].")
 # endif()
 
-# if(CMAKE_CUDA_ARCH STREQUAL "PASCAL")
-#     set(CMAKE_CUDA_ARCHITECTURES 60 61)     # Pascal GPUs: GTX 10XX series
-# elseif(CMAKE_CUDA_ARCH STREQUAL "MAXWELL")
-#     set(CMAKE_CUDA_ARCHITECTURES 50 52 53)  # Maxwell GPUs: GTX 9XX series
-# elseif(CMAKE_CUDA_ARCH STREQUAL "KEPLER")
-#     set(CMAKE_CUDA_ARCHITECTURES 35 37)     # Kepler GPUs: GTX 6XX, GTX 7XX, GTX Titan
-# elseif(CMAKE_CUDA_ARCH STREQUAL "VOLTA")
-#     set(CMAKE_CUDA_ARCHITECTURES 70)        # Volta GPUs: Tesla V100, GTX Titan V
-# elseif(CMAKE_CUDA_ARCH STREQUAL "TURING")
-#     set(CMAKE_CUDA_ARCHITECTURES 75 86)     # Turing GPUs: GTX 16XX, RTX 20XX
-# elseif(CMAKE_CUDA_ARCH STREQUAL "AMPERE")
-#     set(CMAKE_CUDA_ARCHITECTURES 80 86)     # Ampere GPUs: RTX 30XX series
-# else()
-#     message(FATAL_ERROR "Unknown CMAKE_CUDA_ARCH: ${CMAKE_CUDA_ARCH}.")
-# endif()
+# Uncomment the CUDA architecture block if you need to configure it
+# set(CMAKE_CUDA_ARCHITECTURES 60 61)  # Default to Pascal, adjust as needed
 
-# add_executable(cnn src/cnn.cpp src/ckks.cpp)
-# add_executable(keygen src/keygen.cpp src/ckks.cpp)
+# Executables
 add_executable(cnn src/cnn.cpp src/ckks.cpp)
 add_executable(keygen src/keygen.cpp src/ckks.cpp)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/src)
+# Include directories
+target_include_directories(cnn PUBLIC ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(keygen PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
+# SEAL library
 find_package(SEAL REQUIRED)
-target_link_libraries(${PROJECT_NAME} SEAL::seal)
-target_link_libraries(keygen SEAL::seal)
 
+# OpenMP support
+find_package(OpenMP REQUIRED)
+
+# Combine link libraries for both executables
+if(OpenMP_CXX_FOUND)
+    target_compile_options(cnn PRIVATE ${OpenMP_CXX_FLAGS})
+    target_link_libraries(cnn PRIVATE SEAL::seal ${OpenMP_CXX_LIBRARIES})
+
+    target_compile_options(keygen PRIVATE ${OpenMP_CXX_FLAGS})
+    target_link_libraries(keygen PRIVATE SEAL::seal ${OpenMP_CXX_LIBRARIES})
+else()
+    target_link_libraries(cnn PRIVATE SEAL::seal)
+    target_link_libraries(keygen PRIVATE SEAL::seal)
+endif()
+
+# Uncomment the properties for CUDA if needed
 # set_target_properties(cnn PROPERTIES
 #     CUDA_SEPARABLE_COMPILATION ON
 #     CUDA_STANDARD 11
