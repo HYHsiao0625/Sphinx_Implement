@@ -59,12 +59,12 @@ private:
 	unsigned int threadsCount;
 
     /* Encrypt Data */
-	vector<vector<Ciphertext>> _encImg;
+	vector<vector<int>> _encImg;
 	vector<int> _encLabel;
 
 	/* Encrypt Weight */
     vector<vector<vector<double>>> _encConvW;
-	vector<vector<vector<double>>> _encConvB;
+	vector<vector<vector<Ciphertext>>> _encConvB;
 	vector<vector<vector<double>>> _encConvLayer;
 	vector<vector<vector<double>>> _encSigLayer;
 	vector<vector<vector<double>>> _encMaxPooling;
@@ -72,21 +72,21 @@ private:
 
 	vector<double> _encDenseInput;
 	vector<vector<double>> _encDenseW;
-	vector<double> _encDenseB;
+	vector<Ciphertext> _encDenseB;
 	vector<double> _encDenseSum;
 	vector<double> _encDenseSigmoid;
 	vector<vector<double>> _encDenseW2;
-	vector<double> _encDenseB2;
+	vector<Ciphertext> _encDenseB2;
 	vector<double> _encDenseSum2;
 	vector<double> _encDenseSoftmax;
 
 	vector<vector<double>> _encDffW2;
-	vector<double> _encDffB2;
+	vector<Ciphertext> _encDffB2;
 	vector<vector<double>> _encDffW1;
-	vector<double> _encDffB1;
+	vector<Ciphertext> _encDffB1;
 	vector<vector<vector<double>>> _encDffMaxW;
 	vector<vector<vector<double>>> _encDffConvW;
-	vector<vector<vector<double>>> _encDffConvB;
+	vector<vector<vector<Ciphertext>>> _encDffConvB;
 public:
     CNN(/* args */);
     ~CNN();
@@ -101,14 +101,16 @@ public:
 	void WriteInitWeight();
 
 	void EncryptWeight();
+	void subTaskEncryptWeight(int start, int end);
 	void DecryptWeight();
+	void subTaskDecryptWeight(int start, int end);
 	void GiveImg(vector<int> vec, vector<vector<int>>& img);
 	void GiveLabel(int y, vector<int>& vector_y);
 	int GivePrediction();
 	void EncryptData(vector<vector<int>>& img, vector<int>& label);
-	void EncryptForward(vector<vector<Ciphertext>>& _encImg);
+	void EncryptForward(vector<vector<int>>& _encImg);
 	void subTaskEncryptForward(int start, int end);
-	void EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<Ciphertext>>& _encImg);
+	void EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<int>>& _encImg);
 	void subTaskEncryptBackword(int start, int end);
 	void UpdateWeight();
 	void WriteTrainedWeight();
@@ -177,12 +179,12 @@ void CNN::Init()
 	omp_set_num_threads(thread::hardware_concurrency() - 8U);
 
 	/* Encrypt Data */
-	_encImg = vector<vector<Ciphertext>>(32, vector<Ciphertext>(32, _zero));
+	_encImg = vector<vector<int>>(32, vector<int>(32, 0));
 	_encLabel = vector<int>(10, 0);
 
 	/* Encrypt Weight */
 	_encConvW = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
-	_encConvB = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_encConvB = vector<vector<vector<Ciphertext>>>(8, vector<vector<Ciphertext>>(28, vector<Ciphertext>(28, _zero)));
 	_encConvLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
 	_encSigLayer = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
 	_encMaxPooling = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
@@ -190,21 +192,21 @@ void CNN::Init()
 
 	_encDenseInput = vector<double>(1568, 0);
 	_encDenseW = vector<vector<double>>(1568, vector<double>(120, 0));
-	_encDenseB = vector<double>(120, 0);
+	_encDenseB = vector<Ciphertext>(120, _zero);
 	_encDenseSum = vector<double>(120, 0);
 	_encDenseSigmoid = vector<double>(120, 0);
 	_encDenseW2 = vector<vector<double>>(120, vector<double>(10, 0));
-	_encDenseB2 = vector<double>(10, 0);
+	_encDenseB2 = vector<Ciphertext>(10, _zero);
 	_encDenseSum2 = vector<double>(10, 0);
 	_encDenseSoftmax = vector<double>(10, 0);
 
 	_encDffW2 = vector<vector<double>>(120, vector<double>(10, 0));
-	_encDffB2 = vector<double>(10, 0);
+	_encDffB2 = vector<Ciphertext>(10, _zero);
 	_encDffW1 = vector<vector<double>>(1568, vector<double>(120, 0));
-	_encDffB1 = vector<double>(120, 0);
+	_encDffB1 = vector<Ciphertext>(120, _zero);
 	_encDffMaxW = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
 	_encDffConvW = vector<vector<vector<double>>>(8, vector<vector<double>>(5, vector<double>(5, 0)));
-	_encDffConvB = vector<vector<vector<double>>>(8, vector<vector<double>>(28, vector<double>(28, 0)));
+	_encDffConvB = vector<vector<vector<Ciphertext>>>(8, vector<vector<Ciphertext>>(28, vector<Ciphertext>(28, _zero)));
 
 	InitialiseWeight();
 	WriteInitWeight();
@@ -459,26 +461,87 @@ void CNN::WriteInitWeight()
 	_initDenseB2.close();
 }
 
+void CNN::subTaskEncryptWeight(int start, int end) {
+	for (size_t x = start; x < end; x++) {
+		#pragma omp parallel for
+		for (size_t y = 0; y < _encConvB[x].size(); y++)
+			for (size_t z = 0; z < _encConvB[x][y].size(); z++)
+				_ckks.encryptPlain(_convB[x][y][z], _publickey, &_encConvB[x][y][z]);
+	}
+}
+
 void CNN::EncryptWeight()
 {
 	/* Encrypt Weight */
 	_encConvW = _convW;
-    _encConvB = _convB;
-    _encDenseW = _denseW;
-    _encDenseB = _denseB ;
-    _encDenseW2 = _denseW2;
-    _encDenseB2 = _denseB2;
+	_encDenseW = _denseW;
+	_encDenseW2 = _denseW2;
+
+	int tasksPerThread = _convB.size() / threadsCount;
+    int remainingTasks = _convB.size()  % threadsCount;
+
+	vector<thread> threads;
+
+    int current_filter = 0;
+    for (unsigned int t = 0; t < threadsCount; ++t) {
+        int start = current_filter;
+        int end = start + tasksPerThread + (t < remainingTasks ? 1 : 0);
+        threads.emplace_back(&CNN::subTaskEncryptWeight, this, start, end);
+        current_filter = end;
+    }
+
+    for (auto& th : threads)
+        th.join();
+
+	#pragma omp parallel for
+	for (size_t i = 0; i < _encDenseB2.size(); i++)
+    	_ckks.encryptPlain(_denseB[i], _publickey, &_encDenseB[i]);
+
+	#pragma omp parallel for
+	for (size_t i = 0; i < _encDenseB2.size(); i++)
+    	_ckks.encryptPlain(_denseB2[i], _publickey, &_encDenseB2[i]);
+}
+
+void CNN::subTaskDecryptWeight(int start, int end) {
+	for (size_t x = start; x < end; x++) {
+		#pragma omp parallel for
+		for (size_t y = 0; y < _encConvB[x].size(); y++)
+			for (size_t z = 0; z < _encConvB[x][y].size(); z++)
+				_ckks.decryptCipher(_encConvB[x][y][z], _secretkey, &_convB[x][y][z]);
+	}
+		
 }
 
 void CNN::DecryptWeight()
 {
 	/* Decrypt Weight */
 	_convW = _encConvW;
-    _convB = _encConvB;
-    _denseW = _encDenseW;
-    _denseB = _encDenseB;
-    _denseW2 = _encDenseW2;
-    _denseB2 = _encDenseB2;
+	_denseW = _encDenseW;
+	_denseW2 = _encDenseW2;
+
+	int tasksPerThread = _encConvB.size() / threadsCount;
+    int remainingTasks = _encConvB.size()  % threadsCount;
+
+	vector<thread> threads;
+
+    int current_filter = 0;
+    for (unsigned int t = 0; t < threadsCount; ++t) {
+        int start = current_filter;
+        int end = start + tasksPerThread + (t < remainingTasks ? 1 : 0);
+        threads.emplace_back(&CNN::subTaskDecryptWeight, this, start, end);
+        current_filter = end;
+    }
+
+    for (auto& th : threads)
+        th.join();
+
+	#pragma omp parallel for
+	for (size_t i = 0; i < _encDenseB.size(); i++)
+    	_ckks.decryptCipher(_encDenseB[i], _secretkey, &_denseB[i]);
+
+    #pragma omp parallel for
+	for (size_t i = 0; i < _encDenseB2.size(); i++)
+    	_ckks.decryptCipher(_encDenseB2[i], _secretkey, &_denseB2[i]);
 }
 
 void CNN::GiveImg(vector<int> vec, vector<vector<int>>& img) 
@@ -530,7 +593,8 @@ void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
 {
 	/* Encrypt Data */
 	// img
-	#pragma omp parallel for
+	_encImg = img;
+	/*
 	for (size_t x = 0; x < img.size(); x++)
 		for (size_t y = 0; y < img[x].size(); y++) {
 			// cout << "\rEncrypting Image: " << x * img.size() + y + 1 << "/" << img.size() * img[0].size() << flush;
@@ -539,14 +603,14 @@ void CNN::EncryptData(vector<vector<int>>& img, vector<int>& label)
 			else
 				_ckks.encryptPlain(img[x][y], _publickey, &_encImg[x][y]);
 		}
-			
+	*/
 	// label
 	_encLabel = label;
 }
 
 void CNN::subTaskEncryptForward(int start, int end) {
-	stringstream ss1;
-	_zero.save(ss1);
+	// stringstream ss1;
+	// _zero.save(ss1);
 	double localDecrypted;
 	for (int filter_dim = start; filter_dim < end; filter_dim++) 
 	{	
@@ -562,25 +626,18 @@ void CNN::subTaskEncryptForward(int start, int end) {
 				{
 					for (int l = 0; l < filter_size; l++) 
 					{	
-						stringstream ss2;
-						_encImg[i + k][j + l].save(ss2);
-						if (ss1.str().size() == ss2.str().size())
-							localDecrypted = 0;
-						else
-							_ckks.decryptCipher(_encImg[i + k][j + l], _secretkey, &localDecrypted);
-						_encConvLayer[filter_dim][i][j] = localDecrypted * _encConvW[filter_dim][k][l];
-						printf("\rForward-Covolution: %02i/%02i/%02i/%02i/%02i: 05%i v.s 05%i", l, k, j, i, filter_dim, ss1.str().size(), ss2.str().size());
-						cout << flush;
+						_encConvLayer[filter_dim][i][j] = _encImg[i][j] * _encConvW[filter_dim][k][l];
 					}
 				}
-				_encSigLayer[filter_dim][i][j] = Sigmoid(_encConvLayer[filter_dim][i][j] + _encConvB[filter_dim][i][j]);
+				_ckks.decryptCipher(_encConvB[filter_dim][i][j], _secretkey, &localDecrypted);
+				_encSigLayer[filter_dim][i][j] = Sigmoid(_encConvLayer[filter_dim][i][j] + localDecrypted);
 			}
 		}
 		//PrintImg(_encSigLayer[filter_dim]);
 	}
 }
 
-void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
+void CNN::EncryptForward(vector<vector<int>>& _encImg)
 {	
 	/* Split convolution with sigmoid to 8 parts. */	
     int tasksPerThread = 8 / threadsCount;
@@ -654,7 +711,8 @@ void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
 		{
 			_encDenseSum[i] += _encDenseW[j][i] * _encDenseInput[j];
 		}
-		_encDenseSum[i] += _encDenseB[i];
+		_ckks.decryptCipher(_encDenseB[i], _secretkey, &_decrypted);
+		_encDenseSum[i] += _decrypted;
 		_encDenseSigmoid[i] = Sigmoid(_encDenseSum[i]);
 	}
 
@@ -666,7 +724,8 @@ void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
 		{
 			_encDenseSum2[i] += _encDenseW2[j][i] * _encDenseSigmoid[j];
 		}
-		_encDenseSum2[i] += _encDenseB2[i];
+		_ckks.decryptCipher(_encDenseB2[i], _secretkey, &_decrypted);
+		_encDenseSum2[i] += _decrypted;
 	}
 
 	/* Softmax Output */ 
@@ -679,29 +738,20 @@ void CNN::EncryptForward(vector<vector<Ciphertext>>& _encImg)
 
 void CNN::subTaskEncryptBackword(int start, int end) {
 	double localDecrypted;
-	stringstream ss1;
-	_zero.save(ss1);
 	for (int filter_dim = start; filter_dim < end; filter_dim++) 
 	{	
 		for (int i = 0; i < 28; i++) 
 		{	
 			#pragma omp parallel for
 			for (int j = 0; j < 28; j++) 
-			{
+			{	
+				_ckks.encryptPlain(_encDffMaxW[filter_dim][i][j], _publickey, &_encDffConvB[filter_dim][i][j]);
 				double cur_val = _encDffMaxW[filter_dim][i][j];
 				for (int k = 0; k < 5; k++) 
 				{
 					for (int l = 0; l < 5; l++) 
 					{	
-						stringstream ss2;
-						_encImg[i + k][j + l].save(ss2);
-						if (ss1.str().size() == ss2.str().size())
-							localDecrypted = 0;
-						else
-							_ckks.decryptCipher(_encImg[i + k][j + l], _secretkey, &localDecrypted);
-						_encDffConvW[filter_dim][k][l] += localDecrypted * cur_val;
-						printf("\rBackward-Covolution: %02i/%02i/%02i/%02i/%02i: 05%i v.s 05%i", l, k, j, i, filter_dim, ss1.str().size(), ss2.str().size());
-						cout << flush;
+						_encDffConvW[filter_dim][k][l] += _encImg[i + k][j + l] * cur_val;
 					}
 				}
 			}
@@ -709,13 +759,14 @@ void CNN::subTaskEncryptBackword(int start, int end) {
 	}
 }
 
-void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<Ciphertext>>& _encImg) 
+void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<int>>& _encImg) 
 {
 	double _encDelta4[10];
+	#pragma omp parallel for
 	for (int i = 0; i < 10; i++) 
 	{
 		_encDelta4[i] = y_hat[i] - y[i]; // Derivative of Softmax + Cross entropy
-		_encDffB2[i] = _encDelta4[i]; // Bias Changes
+		_ckks.encryptPlain(_encDelta4[i], _publickey, &_encDffB2[i]); // Bias Changes
 		loss += abs(_encDelta4[i]);
 	}
 
@@ -739,10 +790,10 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<C
 		}
 		_encDelta3[i] *= DffSigmoid(_encDenseSum[i]);
 	}
-
+	#pragma omp parallel for
 	for (int i = 0; i < 120; i++)
-	{
-		_encDffB1[i] = _encDelta3[i]; // Bias Weight change
+	{	
+		_ckks.encryptPlain(_encDelta3[i], _publickey, &_encDffB1[i]); // Bias Weight change
 	}
 
 	// Calculate Weight Changes for Dense Layer 1
@@ -793,16 +844,18 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<C
 		}
 	}
 	// Calc Conv Bias Changes
+	/*
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
 	{
 		for (int i = 0; i < 28; i++) 
 		{
 			for (int j = 0; j < 28; j++) 
-			{
-				_encDffConvB[filter_dim][i][j] = _encDffMaxW[filter_dim][i][j];
+			{	
+				_ckks.encryptPlain(_encDffMaxW[filter_dim][i][j], _publickey, &_encDffConvB[filter_dim][i][j]);
 			}
 		}
 	}
+	*/
 
 	// Set Conv Layer Weight changes to 0
 	for (int filter_dim = 0; filter_dim < 8; filter_dim++) 
@@ -839,11 +892,16 @@ void CNN::EncryptBackword(vector<double>& y_hat, vector<int>& y, vector<vector<C
 void CNN::UpdateWeight()
 {
 	for (int i = 0; i < 120; i++) 
-	{
-		_encDenseB[i] -= eta * _encDffB1[i];
+	{	
+		_cipherTemp = _eta;
+		_ckks.evaluateCipher(&_cipherTemp, "*", &_encDffB1[i]);
+		_ckks.evaluateCipher(&_encDenseB[i], "-", &_cipherTemp);
+
 		for (int j = 0; j < 10; j++) 
-		{
-			_encDenseB2[j] -= eta * _encDffB2[j];
+		{	
+			_cipherTemp = _eta;
+			_ckks.evaluateCipher(&_cipherTemp, "*", &_encDffB2[i]);
+			_ckks.evaluateCipher(&_encDenseB2[i], "-", &_cipherTemp);
 			_encDenseW2[i][j] -= eta * _encDffW2[i][j];
 		}
 		for (int k = 0; k < 1568; k++) 
@@ -864,8 +922,10 @@ void CNN::UpdateWeight()
 		for (int l = 0; l < 28; l++) 
 		{
 			for (int m = 0; m < 28; m++) 
-			{
-				_encConvB[i][l][m] -= eta * _encDffConvB[i][l][m];
+			{	
+				_cipherTemp = _eta;
+				_ckks.evaluateCipher(&_cipherTemp, "*", &_encDffConvB[i][l][m]);
+				_ckks.evaluateCipher(&_encConvB[i][l][m], "-", &_cipherTemp);
 			}
 		}
 	}
@@ -886,7 +946,7 @@ void CNN::Train(int epochs)
 		_t = 1;
 		for (int j = 0; j < batch_size; j++)
 		{	
-			cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " | Loss: " << fixed << Loss << " |\n" << flush;
+			cout << "\rEpoch: " << i << " --------- |" << setw(3) << j << " / " << batch_size << " | Loss: " << fixed << Loss << " |" << flush;
 			num = rand() % 60000;
 			vector<vector<int>> img(32, vector<int>(32, 0));
 			vector<int> label(10, 0);
@@ -896,7 +956,7 @@ void CNN::Train(int epochs)
 			EncryptForward(_encImg);
 			EncryptBackword(_encDenseSoftmax, _encLabel, _encImg);
 			//UpdateWeight();
-			AdamOptimizer(0.01, 0.9, 0.999, 1e-8);
+			// AdamOptimizer(0.01, 0.9, 0.999, 1e-8);
 		}
 		Loss = loss / batch_size;
 	}
@@ -1150,6 +1210,7 @@ void CNN::Predict()
 	}
 }
 
+/*
 void CNN::AdamOptimizer(double _lr, double _b1, double _b2, double _eps)
 {
 	vector<vector<vector<double>>> m3d;
@@ -1235,6 +1296,7 @@ void CNN::AdamOptimizer(double _lr, double _b1, double _b2, double _eps)
 	}
 	_t++;
 }
+*/
 int main(int argc, char *argv[])
 {
 	int epoch = stoi(argv[1]);
